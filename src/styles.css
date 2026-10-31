@@ -143,12 +143,45 @@ body {
 }
 
 .sidebar {
+  display: flex;
+  flex-direction: column;
   width: 260px;
   flex-shrink: 0;
   overflow-y: auto;
   background: var(--panel);
   border-right: 1px solid var(--border);
   -webkit-overflow-scrolling: touch;
+}
+
+.sidebar-tabs {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  background: var(--panel);
+}
+
+.sidebar-tab {
+  flex: 1;
+  min-height: var(--tap);
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.sidebar-tab[aria-selected='true'] {
+  border-bottom-color: var(--accent);
+  color: var(--text);
+}
+
+.sidebar-pane[hidden] {
+  display: none;
 }
 
 .sidebar-empty {
@@ -550,6 +583,253 @@ body {
 
 .vr-reset {
   font-size: 13px;
+}
+
+/* --- Perencanaan trajektori --- */
+.plan-overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.plan-label {
+  font: 600 11px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  paint-order: stroke;
+  stroke: #000;
+  stroke-width: 3px;
+}
+
+.mpr-viewer.is-placing .mpr-cell .viewport {
+  cursor: crosshair;
+}
+
+.plan-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px;
+  font-size: 13px;
+}
+
+.plan-panel p {
+  margin: 0;
+}
+
+.plan-disclaimer {
+  padding: 8px;
+  border: 1px solid #8a6d1a;
+  border-radius: 6px;
+  background: rgba(245, 190, 40, 0.1);
+  color: #f5d48a;
+}
+
+.plan-hint,
+.plan-note {
+  color: var(--muted);
+}
+
+.plan-hint {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.plan-pending {
+  padding: 8px;
+  border-radius: 6px;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.plan-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.plan-section h3 {
+  margin: 0;
+  font-size: 13px;
+}
+
+.plan-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.plan-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.plan-row-label {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.plan-landmark {
+  font-weight: 600;
+}
+
+.plan-coord {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.btn-sm {
+  min-width: 36px;
+  min-height: 36px;
+  padding: 0 8px;
+  font-size: 12px;
+}
+
+.btn-danger {
+  color: #ff8a8a;
+}
+
+.plan-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.plan-trajectory {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--trajectory-color);
+  border-radius: 6px;
+  background: var(--panel-2);
+}
+
+.plan-trajectory.is-active {
+  border-color: var(--trajectory-color);
+}
+
+.plan-trajectory-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.plan-swatch {
+  flex-shrink: 0;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--trajectory-color);
+}
+
+.plan-name {
+  flex: 1;
+  min-width: 0;
+  min-height: 36px;
+  padding: 0 6px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-weight: 600;
+}
+
+.plan-name:focus {
+  border-color: var(--accent);
+  outline: none;
+}
+
+.plan-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.plan-metrics {
+  margin: 0;
+  font-size: 12px;
+}
+
+.plan-metrics dt {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.plan-metrics dd {
+  margin: 0 0 6px;
+  font-variant-numeric: tabular-nums;
+}
+
+.plan-export {
+  align-self: stretch;
+}
+
+/* Probe's eye view (panel ke-4) */
+.probe-view {
+  position: absolute;
+  inset: 0;
+  background: #000;
+}
+
+.probe-title,
+.probe-info {
+  position: absolute;
+  left: 10px;
+  color: var(--overlay-text);
+  font-size: 12px;
+  font-weight: 600;
+  text-shadow: 0 0 3px #000, 0 0 3px #000;
+  pointer-events: none;
+}
+
+.probe-title {
+  top: 8px;
+}
+
+.probe-info {
+  bottom: 50px;
+}
+
+.probe-depth {
+  position: absolute;
+  top: 28px;
+  left: 10px;
+  right: 10px;
+  width: auto;
+  height: 28px;
+  margin: 0;
+  accent-color: var(--accent);
+  touch-action: pan-x;
+}
+
+.probe-depth[hidden],
+.probe-empty[hidden] {
+  display: none;
+}
+
+.probe-empty {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  color: var(--muted);
+  text-align: center;
 }
 
 /* --- Layout sempit (iPhone / iPad split view) --- */
