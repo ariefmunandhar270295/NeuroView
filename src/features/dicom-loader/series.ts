@@ -6,6 +6,8 @@ export type SlicePlane = 'Aksial' | 'Sagital' | 'Koronal' | 'Oblik';
 export interface DicomSeries {
   seriesInstanceUID: string;
   studyInstanceUID: string;
+  /** Kosong bila tag tidak ada. */
+  frameOfReferenceUID: string;
   modality: string;
   description: string;
   seriesNumber?: number;
@@ -134,6 +136,7 @@ export function buildSeries(instances: DicomInstance[]): DicomSeries[] {
       return {
         seriesInstanceUID: ref.seriesInstanceUID,
         studyInstanceUID: ref.studyInstanceUID,
+        frameOfReferenceUID: ref.frameOfReferenceUID,
         modality: ref.modality,
         description: ref.seriesDescription,
         seriesNumber: ref.seriesNumber,
