@@ -7,6 +7,9 @@ dcmjsLog.getLogger('validation.dcmjs').setLevel('silent');
 export interface DicomInstance {
   file: File;
   studyInstanceUID: string;
+  studyDescription: string;
+  /** Format DICOM DA: YYYYMMDD. */
+  studyDate: string;
   seriesInstanceUID: string;
   sopInstanceUID: string;
   modality: string;
@@ -20,6 +23,8 @@ export interface DicomInstance {
 
 const TAG = {
   StudyInstanceUID: '0020000D',
+  StudyDescription: '00081030',
+  StudyDate: '00080020',
   SeriesInstanceUID: '0020000E',
   SOPInstanceUID: '00080018',
   Modality: '00080060',
@@ -88,6 +93,8 @@ export async function parseDicomHeader(file: File): Promise<DicomInstance | null
   return {
     file,
     studyInstanceUID: str(ds, TAG.StudyInstanceUID),
+    studyDescription: str(ds, TAG.StudyDescription),
+    studyDate: str(ds, TAG.StudyDate),
     seriesInstanceUID,
     sopInstanceUID: str(ds, TAG.SOPInstanceUID),
     modality: str(ds, TAG.Modality),

@@ -22,7 +22,7 @@ app.innerHTML = `
     </aside>
     <main class="app-main">
       <div class="empty-state">
-        <p><strong>Seret file atau folder DICOM ke sini</strong>, atau gunakan tombol <em>Buka File</em>.</p>
+        <p><strong>Seret folder DICOM ke sini</strong>, atau gunakan tombol <em>Buka Folder DICOM</em> / <em>Buka File</em>.</p>
         <p class="muted">Semua data diproses lokal di browser — tidak ada yang diunggah.</p>
       </div>
     </main>
@@ -50,9 +50,10 @@ const browser = createSeriesBrowser((series) => viewer.showSeries(series).catch(
 
 async function handleFiles(files: File[]) {
   status.textContent = `Membaca ${files.length} file…`;
-  const { series, skipped } = await loadDicomFiles(files, (done, total) => {
+  const { studies, skipped } = await loadDicomFiles(files, (done, total) => {
     status.textContent = `Membaca header ${done}/${total}…`;
   });
+  const series = studies.flatMap((study) => study.series);
 
   if (series.length === 0) {
     status.textContent = `Tidak ada citra DICOM yang bisa dibaca (${skipped} file dilewati).`;
@@ -60,15 +61,17 @@ async function handleFiles(files: File[]) {
   }
 
   status.textContent =
-    `${series.length} series dimuat` + (skipped ? ` · ${skipped} file non-citra dilewati` : '');
+    `${studies.length} study · ${series.length} series dimuat` +
+    (skipped ? ` · ${skipped} file non-citra dilewati` : '');
 
   sidebar.replaceChildren(browser.element);
   browser.setSeries(series);
   emptyState.hidden = true;
   app.classList.add('has-data');
 
-  // Default: series dengan irisan terbanyak (biasanya sekuens utama, bukan localizer).
-  const initial = series.reduce((a, b) => (b.imageIds.length > a.imageIds.length ? b : a));
+  // Default: series aksial dengan irisan terbanyak (biasanya sekuens utama, bukan localizer).
+  const candidates = series.some((s) => s.plane === 'Aksial') ? series.filter((s) => s.plane === 'Aksial') : series;
+  const initial = candidates.reduce((a, b) => (b.imageIds.length > a.imageIds.length ? b : a));
   browser.setActive(initial.seriesInstanceUID);
   await viewer.showSeries(initial).catch(showError);
 }

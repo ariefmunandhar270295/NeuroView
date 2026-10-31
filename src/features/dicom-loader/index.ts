@@ -1,12 +1,12 @@
 import { parseDicomHeader, type DicomInstance } from './parseHeader';
-import { buildSeries, type DicomSeries } from './series';
+import { buildSeries, groupByStudy, type DicomStudy } from './series';
 import { filesFromDataTransfer } from './collectFiles';
 
 export type { DicomInstance } from './parseHeader';
-export type { DicomSeries } from './series';
+export type { DicomSeries, DicomStudy, SlicePlane } from './series';
 
 export interface LoadResult {
-  series: DicomSeries[];
+  studies: DicomStudy[];
   /** Jumlah file yang dilewati (bukan DICOM atau tanpa citra). */
   skipped: number;
 }
@@ -15,7 +15,7 @@ export type ProgressCallback = (done: number, total: number) => void;
 
 const PARSE_CONCURRENCY = 8;
 
-/** Parse header semua file secara lokal lalu kelompokkan menjadi series yang siap ditampilkan. */
+/** Parse header semua file secara lokal lalu kelompokkan menjadi Study → Series yang siap ditampilkan. */
 export async function loadDicomFiles(files: File[], onProgress?: ProgressCallback): Promise<LoadResult> {
   const instances: DicomInstance[] = [];
   let done = 0;
@@ -31,7 +31,7 @@ export async function loadDicomFiles(files: File[], onProgress?: ProgressCallbac
   };
   await Promise.all(Array.from({ length: Math.min(PARSE_CONCURRENCY, files.length) }, worker));
 
-  return { series: buildSeries(instances), skipped: files.length - instances.length };
+  return { studies: groupByStudy(buildSeries(instances)), skipped: files.length - instances.length };
 }
 
 export interface DicomInputOptions {
@@ -66,14 +66,14 @@ function createPicker(label: string, directory: boolean, onFiles: (files: File[]
 }
 
 /**
- * Tombol "Buka File"/"Buka Folder" dan drag & drop. Folder picker disembunyikan di iOS
- * karena Safari iOS tidak mendukung `webkitdirectory`; pengguna iPad memilih banyak file sekaligus.
+ * Tombol "Buka Folder DICOM" (`webkitdirectory`), "Buka File", dan drag & drop.
+ * Safari iOS tidak mendukung `webkitdirectory`, jadi di iPad hanya "Buka File" (multi-select) yang tampil.
  */
 export function createDicomInput({ dropTarget, onFiles }: DicomInputOptions): HTMLElement {
   const container = document.createElement('div');
   container.className = 'dicom-input';
+  if (!isIOS) container.append(createPicker('Buka Folder DICOM', true, onFiles));
   container.append(createPicker('Buka File', false, onFiles));
-  if (!isIOS) container.append(createPicker('Buka Folder', true, onFiles));
 
   // Hitung enter/leave karena event juga terpicu saat kursor melewati elemen anak.
   let dragDepth = 0;
