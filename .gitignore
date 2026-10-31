@@ -1,0 +1,21 @@
+# Dependencies & build
+node_modules/
+dist/
+*.tsbuildinfo
+
+# Data DICOM — jangan pernah di-commit
+/sample/*
+!/sample/README.md
+*.dcm
+*.DCM
+*.dicom
+DICOMDIR
+
+# Editor / OS
+.DS_Store
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.log
+.env
+.env.*
