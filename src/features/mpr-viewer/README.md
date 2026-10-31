@@ -34,4 +34,17 @@ await mpr.showSeries(series);
 mpr.setActive(true); // aktifkan pintasan keyboard
 ```
 
+### Titik ekstensi (dipakai `trajectory-planning`)
+
+```ts
+mpr.addPrimaryTool({ name, label, key, ToolClass, configuration }); // sebelum series pertama
+mpr.addPanelView({ id, label, element, onShow, onHide });            // tab di panel ke-4
+mpr.onReady((ctx) => {
+  // ctx.renderingEngineId, ctx.planes (sel + elemen viewport per bidang),
+  // ctx.volumeRenderViewportId, ctx.setToolCenter(point)
+});
+mpr.onVolumeShown(({ series, volumeId }) => {});
+mpr.selectTool(name);
+```
+
 Biasanya dipakai lewat fitur `viewer-layout` (toggle 1×1 ⇄ 2×2).

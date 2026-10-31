@@ -12,7 +12,9 @@ import { prefetchSeriesMetadata, type DicomSeries } from '../dicom-loader';
 import { createPresetBar, findPreset, NEURO_PRESETS, presetToVoiRange, type WindowPreset } from '../window-presets';
 import { createVolumeRenderPanel } from '../volume-render';
 import { createOverlay } from '../../shared/viewport-overlay';
-import { createMprToolGroup, MPR_PRIMARY_TOOLS } from './tools';
+import { createMprToolGroup, MPR_PRIMARY_TOOLS, type MprExtraTool } from './tools';
+
+export type { MprExtraTool } from './tools';
 
 const RENDERING_ENGINE_ID = 'neuroviewer-mpr-engine';
 const TOOL_GROUP_ID = 'mpr-tools';
@@ -36,6 +38,33 @@ const PLANES: PlaneDef[] = [
 /** Hanya bidang MPR; render ulang panel 3D (ray casting) dihindari bila tidak perlu. */
 const VIEWPORT_IDS = PLANES.map((p) => p.viewportId);
 
+export interface MprPlane {
+  viewportId: string;
+  label: string;
+  color: string;
+  /** Sel grid (tempat overlay tambahan bisa dipasang di atas viewport). */
+  cell: HTMLElement;
+  viewportElement: HTMLDivElement;
+}
+
+/** Akses untuk fitur lain yang memperluas MPR (mis. perencanaan trajektori). */
+export interface MprContext {
+  renderingEngineId: string;
+  planes: MprPlane[];
+  volumeRenderViewportId: string;
+  /** Pindahkan pusat crosshair (dan irisan ketiga bidang) ke titik dunia ini. */
+  setToolCenter(point: Types.Point3): void;
+}
+
+/** Tampilan alternatif di panel ke-4, dipilih lewat tab di samping "3D". */
+export interface MprPanelView {
+  id: string;
+  label: string;
+  element: HTMLElement;
+  onShow?: () => void;
+  onHide?: () => void;
+}
+
 export interface MprViewer {
   /** Grid 2×2: aksial, koronal, sagital, dan volume rendering 3D. */
   element: HTMLElement;
@@ -43,6 +72,14 @@ export interface MprViewer {
   /** Layout harus sudah terlihat sebelum dipanggil (viewport butuh ukuran nyata). */
   showSeries(series: DicomSeries): Promise<void>;
   setActive(active: boolean): void;
+  /** Dipanggil sekali setelah rendering engine dibuat (sebelum volume pertama dipasang). */
+  onReady(callback: (context: MprContext) => void): void;
+  /** Dipanggil setiap kali volume series baru selesai dipasang ke viewport. */
+  onVolumeShown(callback: (info: { series: DicomSeries; volumeId: string }) => void): void;
+  /** Tambah tool drag kiri / satu jari ke toolbar MPR. Panggil sebelum series pertama. */
+  addPrimaryTool(tool: MprExtraTool): void;
+  selectTool(toolName: string): void;
+  addPanelView(view: MprPanelView): void;
   destroy(): void;
 }
 
@@ -79,10 +116,37 @@ export function createMprViewer(): MprViewer {
     return { plane, cell, viewportElement, overlay, initialNormal: undefined as Types.Point3 | undefined };
   });
 
-  // Panel ke-4: volume rendering dari volume yang sama (fitur volume-render).
+  // Panel ke-4: volume rendering dari volume yang sama (fitur volume-render), plus tampilan
+  // tambahan dari fitur lain yang dipilih lewat tab.
   const volumeRender = createVolumeRenderPanel('mpr-3d');
   const cell3d = Object.assign(document.createElement('div'), { className: 'mpr-cell mpr-cell-3d' });
-  cell3d.append(volumeRender.element);
+  const panelTabs = Object.assign(document.createElement('div'), { className: 'panel-tabs', hidden: true });
+  panelTabs.setAttribute('role', 'tablist');
+  cell3d.append(volumeRender.element, panelTabs);
+  const panelViews: MprPanelView[] = [];
+
+  let shownPanelView: MprPanelView | undefined;
+  function showPanelView(id: string) {
+    const next = panelViews.find((view) => view.id === id);
+    if (shownPanelView && shownPanelView !== next) shownPanelView.onHide?.();
+    shownPanelView = next;
+    for (const view of panelViews) view.element.hidden = view.id !== id;
+    for (const tab of panelTabs.children) tab.setAttribute('aria-selected', String((tab as HTMLElement).dataset.view === id));
+    // Viewport yang baru terlihat butuh ukuran canvas yang benar.
+    if (renderingEngine && element.clientWidth > 0) renderingEngine.resize(true, true);
+    next?.onShow?.();
+  }
+
+  function addPanelView(view: MprPanelView) {
+    panelViews.push(view);
+    if (view.element !== volumeRender.element) cell3d.insertBefore(view.element, panelTabs);
+    const tab = button(view.label, view.label, () => showPanelView(view.id));
+    tab.setAttribute('role', 'tab');
+    tab.dataset.view = view.id;
+    panelTabs.append(tab);
+    panelTabs.hidden = panelViews.length < 2;
+    showPanelView(panelViews[0].id);
+  }
 
   element.append(...cells.map((c) => c.cell), cell3d);
 
@@ -90,7 +154,11 @@ export function createMprViewer(): MprViewer {
   let renderingEngine: RenderingEngine | undefined;
   let oblique = false;
   let tools: ReturnType<typeof createMprToolGroup> | undefined;
+  const extraTools: MprExtraTool[] = [];
+  const readyCallbacks: Array<(context: MprContext) => void> = [];
+  const volumeCallbacks: Array<(info: { series: DicomSeries; volumeId: string }) => void> = [];
   const viewport = (id: string) => renderingEngine!.getViewport<Types.IVolumeViewport>(id);
+  addPanelView({ id: '3d', label: '3D', element: volumeRender.element });
 
   function ensureEngine() {
     if (renderingEngine) return;
@@ -112,8 +180,9 @@ export function createMprViewer(): MprViewer {
       viewportIds: VIEWPORT_IDS,
       colors: Object.fromEntries(PLANES.map((p) => [p.viewportId, p.color])),
       isOblique: () => oblique,
+      extraTools,
     });
-    selectTool(tools.getPrimaryTool());
+    selectTool(primaryTool);
 
     // W/L (dan invert) di satu bidang langsung diterapkan ke dua bidang lain.
     const voiSync = synchronizers.createVOISynchronizer(VOI_SYNC_ID, { syncInvertState: true, syncColormap: false });
@@ -134,6 +203,20 @@ export function createMprViewer(): MprViewer {
         updatePlaneLabel(c, event.detail.camera.viewPlaneNormal);
       }) as EventListener);
     }
+
+    const context: MprContext = {
+      renderingEngineId: RENDERING_ENGINE_ID,
+      planes: cells.map(({ plane, cell, viewportElement }) => ({
+        viewportId: plane.viewportId,
+        label: plane.label,
+        color: plane.color,
+        cell,
+        viewportElement: viewportElement as HTMLDivElement,
+      })),
+      volumeRenderViewportId: volumeRender.viewportId,
+      setToolCenter: (point) => tools?.setToolCenter(point),
+    };
+    for (const callback of readyCallbacks) callback(context);
   }
 
   function updatePlaneLabel(c: (typeof cells)[number], normal: Types.Point3 | undefined) {
@@ -153,16 +236,29 @@ export function createMprViewer(): MprViewer {
   toolbar.setAttribute('role', 'toolbar');
 
   const toolButtons = new Map<string, HTMLButtonElement>();
+  // Disimpan agar pilihan sebelum engine dibuat tidak hilang.
+  let primaryTool = MPR_PRIMARY_TOOLS[0].name;
   function selectTool(toolName: string) {
+    primaryTool = toolName;
     tools?.setPrimaryTool(toolName);
     for (const [name, btn] of toolButtons) btn.setAttribute('aria-pressed', String(name === toolName));
   }
-  for (const tool of MPR_PRIMARY_TOOLS) {
-    const btn = button(tool.label, `${tool.label} (${tool.key.toUpperCase()})`, () => selectTool(tool.name));
+  const toolButtonGroup = Object.assign(document.createElement('div'), { className: 'toolbar-group' });
+  function addToolButton(tool: { name: string; label: string; key: string; title?: string }) {
+    const btn = button(tool.label, `${tool.title ?? tool.label} (${tool.key.toUpperCase()})`, () => selectTool(tool.name));
     toolButtons.set(tool.name, btn);
-    toolbar.append(btn);
+    toolButtonGroup.append(btn);
   }
-  selectTool(MPR_PRIMARY_TOOLS[0].name);
+  for (const tool of MPR_PRIMARY_TOOLS) addToolButton(tool);
+  toolbar.append(toolButtonGroup);
+  selectTool(primaryTool);
+
+  function addPrimaryTool(tool: MprExtraTool) {
+    if (tools) throw new Error('addPrimaryTool harus dipanggil sebelum series pertama ditampilkan');
+    extraTools.push(tool);
+    addToolButton(tool);
+    selectTool(primaryTool);
+  }
 
   const obliqueButton = button('Oblik', 'Oblique MPR: seret handle bulat di garis crosshair untuk memutar bidang (O)', () =>
     setOblique(!oblique),
@@ -227,7 +323,7 @@ export function createMprViewer(): MprViewer {
     if (!active || event.metaKey || event.ctrlKey || event.altKey) return;
     if ((event.target as HTMLElement | null)?.closest('input, textarea, select, [contenteditable]')) return;
     const key = event.key.toLowerCase();
-    const tool = MPR_PRIMARY_TOOLS.find((t) => t.key === key);
+    const tool = [...MPR_PRIMARY_TOOLS, ...extraTools].find((t) => t.key === key);
     const preset = NEURO_PRESETS.find((p) => p.key === key);
     if (tool) selectTool(tool.name);
     else if (preset) applyPreset(preset);
@@ -298,6 +394,7 @@ export function createMprViewer(): MprViewer {
       }
       volumeRender.show(series.modality);
       renderingEngine!.renderViewports(VIEWPORT_IDS);
+      for (const callback of volumeCallbacks) callback({ series, volumeId });
     } finally {
       if (token === loadToken) element.classList.remove('is-loading');
     }
@@ -318,5 +415,16 @@ export function createMprViewer(): MprViewer {
     if (currentVolumeId) cache.removeVolumeLoadObject(currentVolumeId);
   }
 
-  return { element, toolbar, showSeries, setActive, destroy };
+  return {
+    element,
+    toolbar,
+    showSeries,
+    setActive,
+    onReady: (callback) => readyCallbacks.push(callback),
+    onVolumeShown: (callback) => volumeCallbacks.push(callback),
+    addPrimaryTool,
+    selectTool,
+    addPanelView,
+    destroy,
+  };
 }

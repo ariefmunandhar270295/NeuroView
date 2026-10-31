@@ -80,6 +80,7 @@ body {
 }
 
 .toolbar,
+.toolbar-group,
 .preset-bar,
 .dicom-input {
   display: flex;
@@ -454,13 +455,52 @@ body {
   font-weight: 600;
 }
 
-/* Lingkaran dari crosshair = handle rotasi (handle slab dimatikan); hanya tampil di mode oblik. */
-.mpr-viewer:not(.is-oblique) .mpr-cell svg circle {
+/* Lingkaran di layer SVG Cornerstone (di dalam .viewport) = handle rotasi crosshair (handle slab
+   dimatikan); hanya tampil di mode oblik. Overlay fitur lain berada di luar .viewport. */
+.mpr-viewer:not(.is-oblique) .mpr-cell .viewport svg circle {
   display: none;
 }
 
 .mpr-cell-3d {
   box-shadow: inset 0 2px 0 var(--muted);
+}
+
+/* Tab tampilan panel ke-4 (3D, probe's eye, ...) */
+.panel-tabs {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  z-index: 2;
+  display: flex;
+}
+
+.panel-tabs[hidden] {
+  display: none;
+}
+
+.panel-tabs .btn {
+  min-height: 36px;
+  font-size: 13px;
+  border-radius: 0;
+}
+
+.panel-tabs .btn:first-child {
+  border-radius: 8px 0 0 8px;
+}
+
+.panel-tabs .btn:last-child {
+  margin-left: -1px;
+  border-radius: 0 8px 8px 0;
+}
+
+.panel-tabs .btn[aria-selected='true'] {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.mpr-cell-3d > [hidden] {
+  display: none;
 }
 
 /* --- Volume rendering 3D --- */
