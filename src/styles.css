@@ -460,24 +460,56 @@ body {
 }
 
 .mpr-cell-3d {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 16px;
-  background: var(--panel);
-  color: var(--muted);
-  text-align: center;
+  box-shadow: inset 0 2px 0 var(--muted);
 }
 
-.mpr-cell-3d strong {
-  color: var(--text);
-  font-size: 18px;
+/* --- Volume rendering 3D --- */
+.vr-panel {
+  position: absolute;
+  inset: 0;
 }
 
-.mpr-progress {
+.vr-label,
+.vr-status {
+  position: absolute;
+  left: 10px;
+  color: var(--overlay-text);
+  font-size: 12px;
+  font-weight: 600;
+  text-shadow: 0 0 3px #000, 0 0 3px #000;
+  pointer-events: none;
+}
+
+.vr-label {
+  top: 8px;
+}
+
+.vr-status {
+  bottom: 8px;
   color: var(--accent);
+}
+
+.vr-controls {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: flex;
+  gap: 6px;
+}
+
+.vr-select {
+  min-height: var(--tap);
+  padding: 0 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel-2);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+}
+
+.vr-reset {
+  font-size: 13px;
 }
 
 /* --- Layout sempit (iPhone / iPad split view) --- */
