@@ -1,6 +1,9 @@
 import { defineConfig } from 'vite';
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
+  // Build memakai path relatif agar bisa disajikan dari subpath, mis. GitHub Pages
+  // (https://<user>.github.io/NeuroView/), tanpa mengikat nama repo.
+  base: command === 'build' ? './' : '/',
   optimizeDeps: {
     // Loader memuat worker dan codec WASM lewat `new URL(..., import.meta.url)`;
     // pre-bundling memutus path tersebut.
@@ -31,4 +34,4 @@ export default defineConfig({
     target: 'es2022',
     chunkSizeWarningLimit: 4096,
   },
-});
+}));
