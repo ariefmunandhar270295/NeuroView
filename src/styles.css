@@ -395,6 +395,91 @@ body {
   font-size: 12px;
 }
 
+/* --- Layout 1×1 / 2×2 --- */
+.viewer-layout {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+}
+
+.viewer-layout[data-layout='1x1'] .mpr-viewer,
+.viewer-layout[data-layout='2x2'] .stack-viewer {
+  display: none;
+}
+
+.layout-toggle {
+  display: flex;
+}
+
+.layout-toggle .btn:first-child {
+  border-radius: 8px 0 0 8px;
+}
+
+.layout-toggle .btn:last-child {
+  margin-left: -1px;
+  border-radius: 0 8px 8px 0;
+}
+
+.layout-toolbar-slot {
+  display: flex;
+}
+
+/* --- MPR --- */
+.mpr-viewer {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 2px;
+  min-width: 0;
+  min-height: 0;
+  background: var(--border);
+}
+
+.mpr-cell {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: #000;
+  box-shadow: inset 0 2px 0 var(--plane-color, transparent);
+}
+
+.mpr-cell .viewport-overlay {
+  font-size: 12px;
+}
+
+.mpr-cell .overlay-tl {
+  color: var(--plane-color);
+  font-weight: 600;
+}
+
+/* Lingkaran dari crosshair = handle rotasi (handle slab dimatikan); hanya tampil di mode oblik. */
+.mpr-viewer:not(.is-oblique) .mpr-cell svg circle {
+  display: none;
+}
+
+.mpr-cell-3d {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 16px;
+  background: var(--panel);
+  color: var(--muted);
+  text-align: center;
+}
+
+.mpr-cell-3d strong {
+  color: var(--text);
+  font-size: 18px;
+}
+
+.mpr-progress {
+  color: var(--accent);
+}
+
 /* --- Layout sempit (iPhone / iPad split view) --- */
 @media (max-width: 700px) {
   .app-body {

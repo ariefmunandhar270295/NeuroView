@@ -1,7 +1,7 @@
 import { Enums, RenderingEngine, type Types } from '@cornerstonejs/core';
 import type { DicomSeries } from '../dicom-loader';
 import { createPresetBar, findPreset, NEURO_PRESETS, presetToVoiRange, type WindowPreset } from '../window-presets';
-import { createOverlay } from './overlay';
+import { createOverlay } from '../../shared/viewport-overlay';
 import { createToolGroup, PRIMARY_TOOLS } from './tools';
 
 const RENDERING_ENGINE_ID = 'neuroviewer-engine';
@@ -14,6 +14,8 @@ export interface StackViewer {
   /** Tombol tool, preset window, reset, dan invert. */
   toolbar: HTMLElement;
   showSeries(series: DicomSeries): Promise<void>;
+  /** Viewer tersembunyi (mis. saat layout MPR) tidak menanggapi pintasan keyboard. */
+  setActive(active: boolean): void;
   destroy(): void;
 }
 
@@ -152,8 +154,9 @@ export function createStackViewer(): StackViewer {
     pageup: -10,
     pagedown: 10,
   };
+  let active = true;
   const onKeyDown = (event: KeyboardEvent) => {
-    if (event.metaKey || event.ctrlKey || event.altKey) return;
+    if (!active || event.metaKey || event.ctrlKey || event.altKey) return;
     const target = event.target as HTMLElement | null;
     const onSlider = target === slider;
     if (!onSlider && target?.closest('input, textarea, select, [contenteditable]')) return;
@@ -173,7 +176,10 @@ export function createStackViewer(): StackViewer {
   window.addEventListener('keydown', onKeyDown);
 
   // --- Resize (rotasi iPad, sidebar, jendela) ---
-  const resizeObserver = new ResizeObserver(() => renderingEngine.resize(true, true));
+  const resizeObserver = new ResizeObserver(() => {
+    // Saat disembunyikan (display: none) ukurannya 0; jangan resize canvas ke 0.
+    if (viewportElement.clientWidth > 0) renderingEngine.resize(true, true);
+  });
   resizeObserver.observe(viewportElement);
 
   let loadToken = 0;
@@ -219,5 +225,9 @@ export function createStackViewer(): StackViewer {
     renderingEngine.destroy();
   }
 
-  return { element, toolbar, showSeries, destroy };
+  function setActive(value: boolean) {
+    active = value;
+  }
+
+  return { element, toolbar, showSeries, setActive, destroy };
 }

@@ -19,6 +19,8 @@ export interface DicomInstance {
   imagePositionPatient?: [number, number, number];
   imageOrientationPatient?: [number, number, number, number, number, number];
   numberOfFrames: number;
+  rows?: number;
+  columns?: number;
 }
 
 const TAG = {
@@ -34,6 +36,8 @@ const TAG = {
   ImagePositionPatient: '00200032',
   ImageOrientationPatient: '00200037',
   NumberOfFrames: '00280008',
+  Rows: '00280010',
+  Columns: '00280011',
   PixelData: '7FE00010',
 } as const;
 
@@ -104,5 +108,7 @@ export async function parseDicomHeader(file: File): Promise<DicomInstance | null
     imagePositionPatient: numArray(ds, TAG.ImagePositionPatient, 3) as DicomInstance['imagePositionPatient'],
     imageOrientationPatient: numArray(ds, TAG.ImageOrientationPatient, 6) as DicomInstance['imageOrientationPatient'],
     numberOfFrames: Math.max(1, num(ds, TAG.NumberOfFrames) ?? 1),
+    rows: num(ds, TAG.Rows),
+    columns: num(ds, TAG.Columns),
   };
 }
