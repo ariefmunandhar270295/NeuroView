@@ -1,0 +1,32 @@
+{
+  "name": "neuroviewer",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@cornerstonejs/core": "5.14.0",
+    "@cornerstonejs/dicom-image-loader": "5.14.0",
+    "@cornerstonejs/metadata": "5.14.0",
+    "@cornerstonejs/tools": "5.14.0",
+    "@cornerstonejs/utils": "5.14.0",
+    "@kitware/vtk.js": "36.4.1",
+    "d3-array": "^3.2.4",
+    "d3-interpolate": "^3.0.1",
+    "dcmjs": "0.52.0",
+    "dicom-parser": "^1.8.21",
+    "events": "^3.3.0",
+    "gl-matrix": "^3.4.3"
+  },
+  "devDependencies": {
+    "@types/d3-array": "^3.2.1",
+    "@types/d3-interpolate": "^3.0.4",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.5"
+  }
+}
