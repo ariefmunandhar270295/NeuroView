@@ -11,6 +11,7 @@ export interface ViewerLayout {
   toolbar: HTMLElement;
   showSeries(series: DicomSeries): Promise<void>;
   setMode(mode: LayoutMode): Promise<void>;
+  getMode(): LayoutMode;
 }
 
 export interface ViewerLayoutOptions {
@@ -109,5 +110,5 @@ export function createViewerLayout({ stack, mpr, onMessage }: ViewerLayoutOption
 
   void setMode('1x1');
 
-  return { element, toolbar, showSeries, setMode };
+  return { element, toolbar, showSeries, setMode, getMode: () => mode };
 }
