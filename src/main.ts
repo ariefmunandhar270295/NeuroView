@@ -65,7 +65,7 @@ async function handleFiles(files: File[]) {
     (skipped ? ` · ${skipped} file non-citra dilewati` : '');
 
   sidebar.replaceChildren(browser.element);
-  browser.setSeries(series);
+  browser.setStudies(studies);
   emptyState.hidden = true;
   app.classList.add('has-data');
 

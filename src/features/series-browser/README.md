@@ -1,15 +1,20 @@
 # series-browser
 
-Daftar series di sidebar (modalitas, deskripsi, nomor series, jumlah gambar).
-Item berupa `<button>` sehingga bisa dipilih dengan klik, tap, maupun keyboard.
+Sidebar kiri berisi Study → Series:
+
+- **Study**: grup yang bisa dilipat (`<details>`), berisi deskripsi study, tanggal, modalitas,
+  dan jumlah series. Nama/ID pasien tidak pernah ditampilkan.
+- **Series**: thumbnail irisan tengah, badge modalitas, deskripsi, nomor series, bidang
+  (Aksial/Sagital/…), dan jumlah gambar. Item berupa `<button>` (klik, tap, atau keyboard).
+- **Thumbnail** (`thumbnails.ts`): dirender satu per satu saat item masuk layar
+  (`IntersectionObserver`) dengan CPU rendering, supaya decode tidak menumpuk dan tidak memakai
+  konteks WebGL tambahan (iPad membatasi jumlahnya). W/L mengikuti nilai default di file DICOM.
 
 ## API
 
 ```ts
 const browser = createSeriesBrowser((series) => viewer.showSeries(series));
 sidebar.append(browser.element);
-browser.setSeries(series);
-browser.setActive(series[0].seriesInstanceUID);
+browser.setStudies(studies);
+browser.setActive(series.seriesInstanceUID);
 ```
-
-Rencana lanjutan: thumbnail irisan tengah, pengelompokan per study.
