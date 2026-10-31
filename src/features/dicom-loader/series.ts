@@ -11,9 +11,14 @@ export interface DicomSeries {
   seriesNumber?: number;
   /** Bidang akuisisi dari ImageOrientationPatient; undefined bila tag tidak ada. */
   plane?: SlicePlane;
+  /** Bisa dijadikan volume (MPR); bila tidak, `volumeIssue` berisi alasannya. */
+  reconstructable: boolean;
+  volumeIssue?: string;
   instances: DicomInstance[];
   /** imageId Cornerstone (`dicomfile:N[?frame=M]`), urut sesuai posisi irisan. */
   imageIds: string[];
+  /** imageId dasar per instance (`dicomfile:N`), sejajar dengan `instances`. */
+  baseImageIds: string[];
 }
 
 export interface DicomStudy {
@@ -67,12 +72,42 @@ function detectPlane(iop: DicomInstance['imageOrientationPatient']): SlicePlane 
   return 'Koronal';
 }
 
-function toImageIds(instances: DicomInstance[]): string[] {
-  return instances.flatMap((instance) => {
-    const imageId = wadouri.fileManager.add(instance.file);
+const MIN_VOLUME_SLICES = 3;
+
+/**
+ * Syarat volume: irisan single-frame berjumlah cukup, orientasi & ukuran matriks sama,
+ * dan jarak antar-irisan (sepanjang normal) seragam. Mengembalikan alasan bila gagal.
+ */
+function checkVolume(sorted: DicomInstance[]): string | undefined {
+  if (sorted.length < MIN_VOLUME_SLICES) return `butuh minimal ${MIN_VOLUME_SLICES} irisan`;
+  if (sorted.some((i) => i.numberOfFrames > 1)) return 'multi-frame belum didukung';
+  const ref = sorted[0];
+  const iop = ref.imageOrientationPatient;
+  if (!iop || sorted.some((i) => !i.imagePositionPatient || !i.imageOrientationPatient)) {
+    return 'geometri irisan tidak lengkap';
+  }
+  const sameOrientation = sorted.every((i) => i.imageOrientationPatient!.every((v, k) => Math.abs(v - iop[k]) < 1e-3));
+  if (!sameOrientation) return 'orientasi irisan berbeda-beda';
+  if (sorted.some((i) => i.rows !== ref.rows || i.columns !== ref.columns)) return 'ukuran matriks berbeda-beda';
+
+  const normal = cross(iop.slice(0, 3), iop.slice(3, 6));
+  const positions = sorted.map((i) => dot(i.imagePositionPatient!, normal));
+  const gaps = positions.slice(1).map((p, k) => p - positions[k]);
+  const mean = gaps.reduce((a, b) => a + b, 0) / gaps.length;
+  if (gaps.some((g) => g < 1e-3)) return 'ada irisan dengan posisi sama';
+  // Toleransi 10%: jarak tidak seragam membuat reformat terdistorsi.
+  if (gaps.some((g) => Math.abs(g - mean) > mean * 0.1)) return 'jarak irisan tidak seragam';
+  return undefined;
+}
+
+function registerFiles(instances: DicomInstance[]): Pick<DicomSeries, 'imageIds' | 'baseImageIds'> {
+  const baseImageIds = instances.map((instance) => wadouri.fileManager.add(instance.file));
+  const imageIds = instances.flatMap((instance, k) => {
+    const imageId = baseImageIds[k];
     if (instance.numberOfFrames === 1) return [imageId];
     return Array.from({ length: instance.numberOfFrames }, (_, i) => `${imageId}?frame=${i + 1}`);
   });
+  return { imageIds, baseImageIds };
 }
 
 /** Kelompokkan instance per SeriesInstanceUID dan daftarkan file ke file manager Cornerstone. */
@@ -95,6 +130,7 @@ export function buildSeries(instances: DicomInstance[]): DicomSeries[] {
     .map((group) => {
       const sorted = sortInstances(group);
       const ref = sorted[0];
+      const volumeIssue = checkVolume(sorted);
       return {
         seriesInstanceUID: ref.seriesInstanceUID,
         studyInstanceUID: ref.studyInstanceUID,
@@ -102,8 +138,10 @@ export function buildSeries(instances: DicomInstance[]): DicomSeries[] {
         description: ref.seriesDescription,
         seriesNumber: ref.seriesNumber,
         plane: detectPlane(ref.imageOrientationPatient),
+        reconstructable: !volumeIssue,
+        volumeIssue,
         instances: sorted,
-        imageIds: toImageIds(sorted),
+        ...registerFiles(sorted),
       };
     })
     .sort((a, b) => (a.seriesNumber ?? Infinity) - (b.seriesNumber ?? Infinity));
