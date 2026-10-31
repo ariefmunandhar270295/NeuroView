@@ -4,11 +4,13 @@ MPR (multiplanar reconstruction) 2×2 dengan `VolumeViewport` Cornerstone3D:
 
 | Kiri atas | Kanan atas | Kiri bawah | Kanan bawah |
 | --------- | ---------- | ---------- | ----------- |
-| Aksial (merah) | Koronal (hijau) | Sagital (kuning) | Panel 3D (placeholder volume rendering) |
+| Aksial (merah) | Koronal (hijau) | Sagital (kuning) | Volume rendering 3D (fitur `volume-render`) |
 
 - **Volume**: dibangun dari imageId lokal series (`cornerstoneStreamingImageVolume:<SeriesUID>`),
   di-stream irisan per irisan dengan progres di panel 3D. Hanya satu volume disimpan di cache;
-  volume sebelumnya dibuang saat ganti series (hemat memori iPad).
+  volume sebelumnya dibuang saat ganti series (hemat memori iPad). Panel 3D memakai volume dan
+  tekstur yang sama. Perubahan di MPR (preset, reset, oblik) hanya me-render ulang tiga bidang,
+  bukan panel 3D.
 - **Crosshair** (`CrosshairsTool`, default di drag kiri / 1 jari): klik untuk memindah pusat,
   seret pusat atau garis untuk menggeser irisan bidang lain. Ketiga bidang selalu sinkron;
   scroll di satu bidang ikut menggeser garis di bidang lain.

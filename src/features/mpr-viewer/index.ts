@@ -10,6 +10,7 @@ import {
 import { synchronizers, SynchronizerManager } from '@cornerstonejs/tools';
 import { prefetchSeriesMetadata, type DicomSeries } from '../dicom-loader';
 import { createPresetBar, findPreset, NEURO_PRESETS, presetToVoiRange, type WindowPreset } from '../window-presets';
+import { createVolumeRenderPanel } from '../volume-render';
 import { createOverlay } from '../../shared/viewport-overlay';
 import { createMprToolGroup, MPR_PRIMARY_TOOLS } from './tools';
 
@@ -32,10 +33,11 @@ const PLANES: PlaneDef[] = [
   { viewportId: 'mpr-coronal', label: 'Koronal', orientation: Enums.OrientationAxis.CORONAL, color: 'rgb(48, 164, 108)' },
   { viewportId: 'mpr-sagittal', label: 'Sagital', orientation: Enums.OrientationAxis.SAGITTAL, color: 'rgb(245, 217, 10)' },
 ];
+/** Hanya bidang MPR; render ulang panel 3D (ray casting) dihindari bila tidak perlu. */
 const VIEWPORT_IDS = PLANES.map((p) => p.viewportId);
 
 export interface MprViewer {
-  /** Grid 2×2: aksial, koronal, sagital, dan panel 3D (placeholder). */
+  /** Grid 2×2: aksial, koronal, sagital, dan volume rendering 3D. */
   element: HTMLElement;
   toolbar: HTMLElement;
   /** Layout harus sudah terlihat sebelum dipanggil (viewport butuh ukuran nyata). */
@@ -77,16 +79,12 @@ export function createMprViewer(): MprViewer {
     return { plane, cell, viewportElement, overlay, initialNormal: undefined as Types.Point3 | undefined };
   });
 
-  const placeholder = document.createElement('div');
-  placeholder.className = 'mpr-cell mpr-cell-3d';
-  const placeholderTitle = Object.assign(document.createElement('strong'), { textContent: '3D' });
-  const placeholderText = Object.assign(document.createElement('span'), {
-    textContent: 'Volume rendering menyusul',
-  });
-  const progress = Object.assign(document.createElement('span'), { className: 'mpr-progress' });
-  placeholder.append(placeholderTitle, placeholderText, progress);
+  // Panel ke-4: volume rendering dari volume yang sama (fitur volume-render).
+  const volumeRender = createVolumeRenderPanel('mpr-3d');
+  const cell3d = Object.assign(document.createElement('div'), { className: 'mpr-cell mpr-cell-3d' });
+  cell3d.append(volumeRender.element);
 
-  element.append(...cells.map((c) => c.cell), placeholder);
+  element.append(...cells.map((c) => c.cell), cell3d);
 
   // --- Engine, tools, sinkronisasi (dibuat saat series pertama ditampilkan) ---
   let renderingEngine: RenderingEngine | undefined;
@@ -97,14 +95,16 @@ export function createMprViewer(): MprViewer {
   function ensureEngine() {
     if (renderingEngine) return;
     renderingEngine = new RenderingEngine(RENDERING_ENGINE_ID);
-    renderingEngine.setViewports(
-      cells.map(({ plane, viewportElement }) => ({
+    renderingEngine.setViewports([
+      ...cells.map(({ plane, viewportElement }) => ({
         viewportId: plane.viewportId,
         type: Enums.ViewportType.ORTHOGRAPHIC,
         element: viewportElement as HTMLDivElement,
         defaultOptions: { orientation: plane.orientation, background: [0, 0, 0] as Types.Point3 },
       })),
-    );
+      volumeRender.viewportInput,
+    ]);
+    volumeRender.attach(RENDERING_ENGINE_ID);
 
     tools = createMprToolGroup({
       toolGroupId: TOOL_GROUP_ID,
@@ -176,7 +176,7 @@ export function createMprViewer(): MprViewer {
     if (!renderingEngine) return;
     // Mematikan oblik mengembalikan bidang ke ortogonal agar tidak ada rotasi "tersembunyi".
     if (!value && isRotated()) tools?.resetCrosshairs();
-    renderingEngine.render();
+    renderingEngine.renderViewports(VIEWPORT_IDS);
   }
 
   // Preset hanya untuk CT (HU); diterapkan ke ketiga bidang sekaligus.
@@ -197,7 +197,7 @@ export function createMprViewer(): MprViewer {
       vp.setProperties({ voiRange: presetToVoiRange(preset) });
       syncVoi(c, vp.getProperties()?.voiRange);
     }
-    renderingEngine.render();
+    renderingEngine.renderViewports(VIEWPORT_IDS);
   }
 
   function reset() {
@@ -208,7 +208,7 @@ export function createMprViewer(): MprViewer {
       vp.resetProperties();
       syncVoi(c, vp.getProperties()?.voiRange);
     }
-    renderingEngine.render();
+    renderingEngine.renderViewports(VIEWPORT_IDS);
   }
 
   const separator = () => Object.assign(document.createElement('span'), { className: 'toolbar-sep' });
@@ -249,7 +249,7 @@ export function createMprViewer(): MprViewer {
     const { volumeId, framesProcessed, numberOfFrames } = event.detail;
     if (volumeId !== currentVolumeId || !numberOfFrames) return;
     const done = framesProcessed >= numberOfFrames;
-    progress.textContent = done ? '' : `Memuat volume ${Math.round((framesProcessed / numberOfFrames) * 100)}%`;
+    volumeRender.setStatus(done ? '' : `Memuat volume ${Math.round((framesProcessed / numberOfFrames) * 100)}%`);
   }) as EventListener;
   eventTarget.addEventListener(Enums.Events.IMAGE_VOLUME_MODIFIED, onVolumeModified);
 
@@ -261,17 +261,16 @@ export function createMprViewer(): MprViewer {
     presetsEnabled = series.modality === 'CT';
     presetBar.setEnabled(presetsEnabled);
     cells[0].overlay.update({ title: series.description, modality: series.modality });
-    placeholderText.textContent = `${series.modality} · ${series.description || 'Series'} · ${series.imageIds.length} irisan. Volume rendering menyusul.`;
 
     // Skema ini ditangani loader default Cornerstone (streaming irisan demi irisan dari imageId lokal).
     const volumeId = `cornerstoneStreamingImageVolume:${series.seriesInstanceUID}`;
     if (volumeId === currentVolumeId) return;
 
     element.classList.add('is-loading');
-    progress.textContent = 'Menyiapkan volume…';
+    volumeRender.setStatus('Menyiapkan volume…');
     try {
       await prefetchSeriesMetadata(series, (done, total) => {
-        if (token === loadToken) progress.textContent = `Membaca irisan ${done}/${total}`;
+        if (token === loadToken) volumeRender.setStatus(`Membaca irisan ${done}/${total}`);
       });
       if (token !== loadToken) return;
       const volume = cache.getVolume(volumeId) ?? (await volumeLoader.createAndCacheVolume(volumeId, { imageIds: series.imageIds }));
@@ -280,7 +279,7 @@ export function createMprViewer(): MprViewer {
       const previousVolumeId = currentVolumeId;
       currentVolumeId = volumeId;
       volume.load(() => undefined);
-      await setVolumesForViewports(renderingEngine!, [{ volumeId }], VIEWPORT_IDS);
+      await setVolumesForViewports(renderingEngine!, [{ volumeId }], [...VIEWPORT_IDS, volumeRender.viewportId]);
       if (token !== loadToken) return;
 
       // Hanya satu volume disimpan agar memori iPad tidak habis.
@@ -297,7 +296,8 @@ export function createMprViewer(): MprViewer {
         c.overlay.update({ plane: c.plane.label, index: vp.getSliceIndex(), total: vp.getNumberOfSlices() });
         syncVoi(c, vp.getProperties()?.voiRange);
       }
-      renderingEngine!.render();
+      volumeRender.show(series.modality);
+      renderingEngine!.renderViewports(VIEWPORT_IDS);
     } finally {
       if (token === loadToken) element.classList.remove('is-loading');
     }
@@ -313,6 +313,7 @@ export function createMprViewer(): MprViewer {
     resizeObserver.disconnect();
     SynchronizerManager.destroySynchronizer(VOI_SYNC_ID);
     tools?.destroy();
+    volumeRender.destroy();
     renderingEngine?.destroy();
     if (currentVolumeId) cache.removeVolumeLoadObject(currentVolumeId);
   }
