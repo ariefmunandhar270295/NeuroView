@@ -1,6 +1,7 @@
 import './styles.css';
 import { initCornerstone } from './core/cornerstone';
-import { createDicomInput, loadDicomFiles } from './features/dicom-loader';
+import { createAnonymizer } from './features/dicom-anonymizer';
+import { createDicomInput, loadDicomFiles, type DicomSeries, type DicomStudy } from './features/dicom-loader';
 import { createExportMenu, createImageIndex, type ImageReference } from './features/export';
 import { createMprViewer } from './features/mpr-viewer';
 import { createSeriesBrowser } from './features/series-browser';
@@ -75,7 +76,14 @@ const showError = (error: unknown) => {
   status.textContent = 'Gagal menampilkan series. Periksa format file (lihat console).';
 };
 
-const browser = createSeriesBrowser((series) => layout.showSeries(series).catch(showError));
+let loadedStudies: DicomStudy[] = [];
+let currentSeries: DicomSeries | undefined;
+function showSeries(series: DicomSeries) {
+  currentSeries = series;
+  return layout.showSeries(series).catch(showError);
+}
+
+const browser = createSeriesBrowser((series) => showSeries(series));
 
 async function handleFiles(files: File[]) {
   status.textContent = `Membaca ${files.length} file…`;
@@ -102,8 +110,9 @@ async function handleFiles(files: File[]) {
   // Default: series aksial dengan irisan terbanyak (biasanya sekuens utama, bukan localizer).
   const candidates = series.some((s) => s.plane === 'Aksial') ? series.filter((s) => s.plane === 'Aksial') : series;
   const initial = candidates.reduce((a, b) => (b.imageIds.length > a.imageIds.length ? b : a));
+  loadedStudies = studies;
   browser.setActive(initial.seriesInstanceUID);
-  await layout.showSeries(initial).catch(showError);
+  await showSeries(initial);
 }
 
 let describeImage: (imageId: string) => ImageReference | undefined = () => undefined;
@@ -117,6 +126,15 @@ const exportMenu = createExportMenu({
     planner.store.trajectories.length || Object.keys(planner.store.landmarks).length ? planner.store.toJSON() : undefined,
   onMessage: (text) => (status.textContent = text),
 });
+
+const anonymizer = createAnonymizer({
+  getSelection: () => {
+    const study = loadedStudies.find((s) => s.series.includes(currentSeries!));
+    return currentSeries && study ? { series: currentSeries, study } : undefined;
+  },
+  onMessage: (text) => (status.textContent = text),
+});
+exportMenu.addItem('Anonimkan & unduh DICOM…', 'Hapus identitas pasien & institusi lalu unduh ZIP', () => anonymizer.open());
 
 headerInput.append(
   exportMenu.element,
