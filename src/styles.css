@@ -135,6 +135,68 @@ body {
   outline-offset: 1px;
 }
 
+/* --- Menu ekspor --- */
+.header-input {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.export-menu {
+  position: relative;
+}
+
+.export-menu > summary {
+  list-style: none;
+}
+
+.export-menu > summary::-webkit-details-marker {
+  display: none;
+}
+
+.export-menu[open] > summary {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.menu-panel {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  min-width: 240px;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.menu-item {
+  min-height: var(--tap);
+  padding: 0 12px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.menu-item:hover,
+.menu-item:focus-visible {
+  background: var(--accent-soft);
+  outline: none;
+}
+
+.disclaimer {
+  color: #f5d48a;
+}
+
 /* --- Body --- */
 .app-body {
   flex: 1;

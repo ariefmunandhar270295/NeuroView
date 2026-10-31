@@ -1,11 +1,13 @@
 import './styles.css';
 import { initCornerstone } from './core/cornerstone';
 import { createDicomInput, loadDicomFiles } from './features/dicom-loader';
+import { createExportMenu, createImageIndex, type ImageReference } from './features/export';
 import { createMprViewer } from './features/mpr-viewer';
 import { createSeriesBrowser } from './features/series-browser';
 import { createStackViewer } from './features/stack-viewer';
 import { createTrajectoryPlanner } from './features/trajectory-planning';
 import { createViewerLayout } from './features/viewer-layout';
+import { CLINICAL_DISCLAIMER } from './shared/disclaimer';
 
 // Cegah pinch-zoom halaman di iOS Safari agar gesture sampai ke viewport.
 document.addEventListener('gesturestart', (event) => event.preventDefault());
@@ -32,6 +34,7 @@ app.innerHTML = `
       <div class="empty-state">
         <p><strong>Seret folder DICOM ke sini</strong>, atau gunakan tombol <em>Buka Folder DICOM</em> / <em>Buka File</em>.</p>
         <p class="muted">Semua data diproses lokal di browser — tidak ada yang diunggah.</p>
+        <p class="disclaimer">⚠ ${CLINICAL_DISCLAIMER}</p>
       </div>
     </main>
   </div>
@@ -46,9 +49,10 @@ const main = app.querySelector<HTMLElement>('.app-main')!;
 const emptyState = app.querySelector<HTMLElement>('.empty-state')!;
 const status = app.querySelector<HTMLElement>('.status')!;
 
+const stack = createStackViewer();
 const mpr = createMprViewer();
 const layout = createViewerLayout({
-  stack: createStackViewer(),
+  stack,
   mpr,
   onMessage: (text) => (status.textContent = text),
 });
@@ -90,6 +94,7 @@ async function handleFiles(files: File[]) {
     (skipped ? ` · ${skipped} file non-citra dilewati` : '');
 
   seriesPane.replaceChildren(browser.element);
+  describeImage = createImageIndex(studies);
   browser.setStudies(studies);
   emptyState.hidden = true;
   app.classList.add('has-data');
@@ -101,7 +106,20 @@ async function handleFiles(files: File[]) {
   await layout.showSeries(initial).catch(showError);
 }
 
+let describeImage: (imageId: string) => ImageReference | undefined = () => undefined;
+const exportMenu = createExportMenu({
+  getCaptureElement: () => {
+    if (!app.classList.contains('has-data')) return undefined;
+    return layout.getMode() === '2x2' ? mpr.element : (stack.element.querySelector<HTMLElement>('.viewport-wrap') ?? undefined);
+  },
+  describeImage: (imageId) => describeImage(imageId),
+  getTrajectoryPlan: () =>
+    planner.store.trajectories.length || Object.keys(planner.store.landmarks).length ? planner.store.toJSON() : undefined,
+  onMessage: (text) => (status.textContent = text),
+});
+
 headerInput.append(
+  exportMenu.element,
   createDicomInput({
     dropTarget: app,
     onFiles: (files) => void handleFiles(files).catch(showError),
