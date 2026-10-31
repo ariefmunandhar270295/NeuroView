@@ -1,5 +1,6 @@
 import { Enums, RenderingEngine, type Types } from '@cornerstonejs/core';
 import type { DicomSeries } from '../dicom-loader';
+import { createPresetBar, findPreset, NEURO_PRESETS, presetToVoiRange, type WindowPreset } from '../window-presets';
 import { createOverlay } from './overlay';
 import { createToolGroup, PRIMARY_TOOLS } from './tools';
 
@@ -10,7 +11,7 @@ const TOOL_GROUP_ID = 'stack-tools';
 export interface StackViewer {
   /** Viewport, overlay, dan slider irisan. */
   element: HTMLElement;
-  /** Tombol tool, reset, dan invert. */
+  /** Tombol tool, preset window, reset, dan invert. */
   toolbar: HTMLElement;
   showSeries(series: DicomSeries): Promise<void>;
   destroy(): void;
@@ -78,20 +79,46 @@ export function createStackViewer(): StackViewer {
   }
   selectTool(tools.getPrimaryTool());
 
+  // Preset window hanya untuk CT (HU). VOI bisa berubah lewat drag, preset, atau reset;
+  // overlay & tombol preset selalu mengikuti.
+  let presetsEnabled = false;
+  const presetBar = createPresetBar(applyPreset);
+  presetBar.setEnabled(false);
+
+  function syncVoi(voi: Types.VOIRange | undefined) {
+    const preset = presetsEnabled ? findPreset(voi) : undefined;
+    presetBar.setActive(preset?.id);
+    overlay.update({ voi, preset: preset?.label });
+  }
+
+  function applyPreset(preset: WindowPreset) {
+    if (!presetsEnabled) return;
+    const vp = viewport();
+    vp.setProperties({ voiRange: presetToVoiRange(preset) });
+    vp.render();
+    syncVoi(vp.getProperties().voiRange);
+  }
+
   const reset = () => {
     const vp = viewport();
     vp.resetCamera();
     vp.resetProperties();
     vp.render();
+    syncVoi(vp.getProperties().voiRange);
   };
   const invert = () => {
     const vp = viewport();
     vp.setProperties({ invert: !vp.getProperties().invert });
     vp.render();
   };
-  const separator = document.createElement('span');
-  separator.className = 'toolbar-sep';
-  toolbar.append(separator, button('Invert', 'Invert (I)', invert), button('Reset', 'Reset tampilan (R)', reset));
+  const separator = () => Object.assign(document.createElement('span'), { className: 'toolbar-sep' });
+  toolbar.append(
+    separator(),
+    presetBar.element,
+    separator(),
+    button('Invert', 'Invert (I)', invert),
+    button('Reset', 'Reset tampilan (R)', reset),
+  );
 
   // --- Sinkronisasi overlay & slider ---
   viewportElement.addEventListener(Enums.Events.STACK_NEW_IMAGE, ((
@@ -102,7 +129,7 @@ export function createStackViewer(): StackViewer {
   }) as EventListener);
 
   viewportElement.addEventListener(Enums.Events.VOI_MODIFIED, ((event: Types.EventTypes.VoiModifiedEvent) => {
-    overlay.update({ voi: event.detail.range });
+    syncVoi(event.detail.range);
   }) as EventListener);
 
   slider.addEventListener('input', () => {
@@ -133,7 +160,9 @@ export function createStackViewer(): StackViewer {
 
     const key = event.key.toLowerCase();
     const tool = PRIMARY_TOOLS.find((t) => t.key === key);
+    const preset = NEURO_PRESETS.find((p) => p.key === key);
     if (tool) selectTool(tool.name);
+    else if (preset) applyPreset(preset);
     else if (key === 'r') reset();
     else if (key === 'i') invert();
     // Saat slider fokus, panah sudah ditangani slider itu sendiri.
@@ -157,9 +186,12 @@ export function createStackViewer(): StackViewer {
     slider.disabled = true;
     slider.max = String(series.imageIds.length - 1);
     slider.value = String(startIndex);
+    presetsEnabled = series.modality === 'CT';
+    presetBar.setEnabled(presetsEnabled);
     overlay.update({
       title: series.description,
       modality: series.modality,
+      plane: series.plane,
       index: startIndex,
       total: series.imageIds.length,
       voi: undefined,
@@ -171,7 +203,7 @@ export function createStackViewer(): StackViewer {
       if (token !== loadToken) return;
       vp.resetCamera();
       vp.render();
-      overlay.update({ voi: vp.getProperties().voiRange });
+      syncVoi(vp.getProperties().voiRange);
     } finally {
       if (token === loadToken) {
         element.classList.remove('is-loading');
