@@ -16,8 +16,11 @@ declare module 'dcmjs' {
   export type DicomDataset = Record<string, DicomDataElement>;
 
   export class DicomDict {
+    constructor(meta: DicomDataset);
     meta: DicomDataset;
     dict: DicomDataset;
+    /** Serialisasi kembali ke file DICOM Part 10. */
+    write(options?: { allowInvalidVRLength?: boolean }): ArrayBuffer;
   }
 
   export class DicomMessage {
