@@ -4,6 +4,7 @@ import { createDicomInput, loadDicomFiles } from './features/dicom-loader';
 import { createMprViewer } from './features/mpr-viewer';
 import { createSeriesBrowser } from './features/series-browser';
 import { createStackViewer } from './features/stack-viewer';
+import { createTrajectoryPlanner } from './features/trajectory-planning';
 import { createViewerLayout } from './features/viewer-layout';
 
 // Cegah pinch-zoom halaman di iOS Safari agar gesture sampai ke viewport.
@@ -20,7 +21,12 @@ app.innerHTML = `
   </header>
   <div class="app-body">
     <aside class="sidebar">
-      <p class="sidebar-empty">Belum ada series.</p>
+      <div class="sidebar-tabs" role="tablist">
+        <button type="button" class="sidebar-tab" role="tab" data-pane="series" aria-selected="true">Series</button>
+        <button type="button" class="sidebar-tab" role="tab" data-pane="plan" aria-selected="false">Rencana</button>
+      </div>
+      <div class="sidebar-pane" data-pane="series"><p class="sidebar-empty">Belum ada series.</p></div>
+      <div class="sidebar-pane" data-pane="plan" hidden></div>
     </aside>
     <main class="app-main">
       <div class="empty-state">
@@ -34,16 +40,29 @@ app.innerHTML = `
 
 const headerTools = app.querySelector<HTMLElement>('.header-tools')!;
 const headerInput = app.querySelector<HTMLElement>('.header-input')!;
-const sidebar = app.querySelector<HTMLElement>('.sidebar')!;
+const seriesPane = app.querySelector<HTMLElement>('.sidebar-pane[data-pane="series"]')!;
+const planPane = app.querySelector<HTMLElement>('.sidebar-pane[data-pane="plan"]')!;
 const main = app.querySelector<HTMLElement>('.app-main')!;
 const emptyState = app.querySelector<HTMLElement>('.empty-state')!;
 const status = app.querySelector<HTMLElement>('.status')!;
 
+const mpr = createMprViewer();
 const layout = createViewerLayout({
   stack: createStackViewer(),
-  mpr: createMprViewer(),
+  mpr,
   onMessage: (text) => (status.textContent = text),
 });
+const planner = createTrajectoryPlanner({ mpr, ensureMpr: () => layout.setMode('2x2') });
+planPane.append(planner.panel);
+
+for (const tab of app.querySelectorAll<HTMLButtonElement>('.sidebar-tab')) {
+  tab.addEventListener('click', () => {
+    for (const other of app.querySelectorAll<HTMLElement>('.sidebar-tab')) {
+      other.setAttribute('aria-selected', String(other === tab));
+    }
+    for (const pane of app.querySelectorAll<HTMLElement>('.sidebar-pane')) pane.hidden = pane.dataset.pane !== tab.dataset.pane;
+  });
+}
 headerTools.append(layout.toolbar);
 main.append(layout.element);
 
@@ -70,7 +89,7 @@ async function handleFiles(files: File[]) {
     `${studies.length} study · ${series.length} series dimuat` +
     (skipped ? ` · ${skipped} file non-citra dilewati` : '');
 
-  sidebar.replaceChildren(browser.element);
+  seriesPane.replaceChildren(browser.element);
   browser.setStudies(studies);
   emptyState.hidden = true;
   app.classList.add('has-data');

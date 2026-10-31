@@ -1,5 +1,6 @@
 import {
   addTool,
+  type BaseTool,
   CrosshairsTool,
   Enums as ToolEnums,
   PanTool,
@@ -59,6 +60,14 @@ export const MPR_PRIMARY_TOOLS: MprTool[] = [
   { name: ZoomTool.toolName, label: 'Zoom', key: 'z' },
 ];
 
+/** Tool tambahan dari fitur lain (mis. titik perencanaan trajektori). */
+export interface MprExtraTool extends MprTool {
+  ToolClass: typeof BaseTool;
+  configuration?: Record<string, unknown>;
+  /** Teks tooltip tombol toolbar. */
+  title?: string;
+}
+
 export interface MprToolOptions {
   toolGroupId: string;
   renderingEngineId: string;
@@ -67,6 +76,7 @@ export interface MprToolOptions {
   colors: Record<string, string>;
   /** Dibaca saat crosshair disentuh; true = handle rotasi boleh diseret (oblique MPR). */
   isOblique: () => boolean;
+  extraTools?: MprExtraTool[];
 }
 
 const coarsePointer = window.matchMedia('(pointer: coarse)').matches;
@@ -76,8 +86,16 @@ const coarsePointer = window.matchMedia('(pointer: coarse)').matches;
  * - kiri / 1 jari: tool aktif (default Crosshair: klik untuk pindah, seret garis/pusat)
  * - kanan: window/level · tengah / 3 jari: geser · roda: irisan · Ctrl+roda / pinch: zoom
  */
-export function createMprToolGroup({ toolGroupId, renderingEngineId, viewportIds, colors, isOblique }: MprToolOptions) {
+export function createMprToolGroup({
+  toolGroupId,
+  renderingEngineId,
+  viewportIds,
+  colors,
+  isOblique,
+  extraTools = [],
+}: MprToolOptions) {
   for (const Tool of [MprCrosshairsTool, WindowLevelTool, PanTool, ZoomTool, StackScrollTool]) addTool(Tool);
+  for (const { ToolClass } of extraTools) addTool(ToolClass);
 
   const toolGroup = ToolGroupManager.createToolGroup(toolGroupId);
   if (!toolGroup) throw new Error(`Tool group ${toolGroupId} sudah ada`);
@@ -94,6 +112,7 @@ export function createMprToolGroup({ toolGroupId, renderingEngineId, viewportIds
     handleRadius: coarsePointer ? 8 : 4,
   });
   for (const { name } of MPR_PRIMARY_TOOLS.slice(1)) toolGroup.addTool(name);
+  for (const { name, configuration } of extraTools) toolGroup.addTool(name, configuration);
   for (const viewportId of viewportIds) toolGroup.addViewport(viewportId, renderingEngineId);
 
   toolGroup.setToolActive(WindowLevelTool.toolName, { bindings: [{ mouseButton: MouseBindings.Secondary }] });
@@ -115,12 +134,15 @@ export function createMprToolGroup({ toolGroupId, renderingEngineId, viewportIds
   }
 
   setPrimaryTool(MprCrosshairsTool.toolName);
+  const crosshairs = () => toolGroup.getToolInstance(MprCrosshairsTool.toolName) as CrosshairsTool;
 
   return {
     setPrimaryTool,
     getPrimaryTool: () => primary,
     /** Kembalikan semua bidang ke ortogonal, reset zoom/pan, dan pusatkan crosshair. */
-    resetCrosshairs: () => (toolGroup.getToolInstance(MprCrosshairsTool.toolName) as CrosshairsTool).resetCrosshairs(),
+    resetCrosshairs: () => crosshairs().resetCrosshairs(),
+    /** Geser irisan ketiga bidang agar melewati titik ini (pusat crosshair pindah ke sana). */
+    setToolCenter: (point: [number, number, number]) => crosshairs().setToolCenter(point),
     destroy: () => ToolGroupManager.destroyToolGroup(toolGroupId),
   };
 }

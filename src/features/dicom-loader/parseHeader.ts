@@ -11,6 +11,8 @@ export interface DicomInstance {
   /** Format DICOM DA: YYYYMMDD. */
   studyDate: string;
   seriesInstanceUID: string;
+  /** Kerangka koordinat pasien; series dengan nilai sama berbagi koordinat (mm) yang sama. */
+  frameOfReferenceUID: string;
   sopInstanceUID: string;
   modality: string;
   seriesDescription: string;
@@ -28,6 +30,7 @@ const TAG = {
   StudyDescription: '00081030',
   StudyDate: '00080020',
   SeriesInstanceUID: '0020000E',
+  FrameOfReferenceUID: '00200052',
   SOPInstanceUID: '00080018',
   Modality: '00080060',
   SeriesDescription: '0008103E',
@@ -100,6 +103,7 @@ export async function parseDicomHeader(file: File): Promise<DicomInstance | null
     studyDescription: str(ds, TAG.StudyDescription),
     studyDate: str(ds, TAG.StudyDate),
     seriesInstanceUID,
+    frameOfReferenceUID: str(ds, TAG.FrameOfReferenceUID),
     sopInstanceUID: str(ds, TAG.SOPInstanceUID),
     modality: str(ds, TAG.Modality),
     seriesDescription: str(ds, TAG.SeriesDescription),

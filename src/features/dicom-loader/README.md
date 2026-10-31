@@ -11,7 +11,8 @@ Memuat file DICOM lokal ke Cornerstone tanpa upload ke server.
 - **Study → Series**: `series.ts` mengelompokkan per `SeriesInstanceUID`, membuang SOP duplikat,
   mengurutkan irisan berdasarkan proyeksi `ImagePositionPatient` ke normal bidang
   (fallback `InstanceNumber`), lalu mengelompokkan series per `StudyInstanceUID`
-  (deskripsi + tanggal study, tanpa data pasien). Bidang akuisisi (Aksial/Sagital/Koronal/Oblik)
+  (deskripsi + tanggal study, tanpa data pasien). `FrameOfReferenceUID` ikut dibaca agar fitur
+  lain tahu series mana yang berbagi kerangka koordinat. Bidang akuisisi (Aksial/Sagital/Koronal/Oblik)
   dideteksi dari `ImageOrientationPatient`. File didaftarkan ke `wadouri.fileManager`,
   menghasilkan imageId `dicomfile:N` (multi-frame: `dicomfile:N?frame=M`).
 - **Kelayakan volume**: `reconstructable` bernilai true bila series bisa dipakai MPR — minimal
