@@ -395,6 +395,35 @@ body {
   font-size: 12px;
 }
 
+/* --- Layout 1×1 / 2×2 --- */
+.viewer-layout {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+}
+
+.viewer-layout[data-layout='1x1'] .mpr-viewer,
+.viewer-layout[data-layout='2x2'] .stack-viewer {
+  display: none;
+}
+
+.layout-toggle {
+  display: flex;
+}
+
+.layout-toggle .btn:first-child {
+  border-radius: 8px 0 0 8px;
+}
+
+.layout-toggle .btn:last-child {
+  margin-left: -1px;
+  border-radius: 0 8px 8px 0;
+}
+
+.layout-toolbar-slot {
+  display: flex;
+}
+
 /* --- MPR --- */
 .mpr-viewer {
   flex: 1;

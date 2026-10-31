@@ -1,8 +1,10 @@
 import './styles.css';
 import { initCornerstone } from './core/cornerstone';
 import { createDicomInput, loadDicomFiles } from './features/dicom-loader';
+import { createMprViewer } from './features/mpr-viewer';
 import { createSeriesBrowser } from './features/series-browser';
 import { createStackViewer } from './features/stack-viewer';
+import { createViewerLayout } from './features/viewer-layout';
 
 // Cegah pinch-zoom halaman di iOS Safari agar gesture sampai ke viewport.
 document.addEventListener('gesturestart', (event) => event.preventDefault());
@@ -37,16 +39,20 @@ const main = app.querySelector<HTMLElement>('.app-main')!;
 const emptyState = app.querySelector<HTMLElement>('.empty-state')!;
 const status = app.querySelector<HTMLElement>('.status')!;
 
-const viewer = createStackViewer();
-headerTools.append(viewer.toolbar);
-main.append(viewer.element);
+const layout = createViewerLayout({
+  stack: createStackViewer(),
+  mpr: createMprViewer(),
+  onMessage: (text) => (status.textContent = text),
+});
+headerTools.append(layout.toolbar);
+main.append(layout.element);
 
 const showError = (error: unknown) => {
   console.error(error);
   status.textContent = 'Gagal menampilkan series. Periksa format file (lihat console).';
 };
 
-const browser = createSeriesBrowser((series) => viewer.showSeries(series).catch(showError));
+const browser = createSeriesBrowser((series) => layout.showSeries(series).catch(showError));
 
 async function handleFiles(files: File[]) {
   status.textContent = `Membaca ${files.length} file…`;
@@ -73,7 +79,7 @@ async function handleFiles(files: File[]) {
   const candidates = series.some((s) => s.plane === 'Aksial') ? series.filter((s) => s.plane === 'Aksial') : series;
   const initial = candidates.reduce((a, b) => (b.imageIds.length > a.imageIds.length ? b : a));
   browser.setActive(initial.seriesInstanceUID);
-  await viewer.showSeries(initial).catch(showError);
+  await layout.showSeries(initial).catch(showError);
 }
 
 headerInput.append(
