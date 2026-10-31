@@ -13,6 +13,22 @@ import {
 
 const { MouseBindings, KeyboardBindings } = ToolEnums;
 
+/**
+ * ProbeTool 5.14 mengganti indeks k dengan nomor irisan stack sebelum membaca voxel, padahal voxel
+ * manager StackViewport hanya berisi satu irisan, sehingga nilai probe selalu kosong. Untuk target
+ * stack (`imageId:`), baca voxel di k = 0.
+ */
+class StackProbeTool extends ProbeTool {
+  getTargetImageData(targetId: string) {
+    const data = super.getTargetImageData(targetId);
+    const voxelManager = data?.voxelManager;
+    if (!data || !voxelManager || !targetId.startsWith('imageId:')) return data;
+    const singleSlice = Object.create(voxelManager) as { getAtIJKPoint: (ijk: [number, number, number]) => unknown };
+    singleSlice.getAtIJKPoint = ([i, j]) => voxelManager.getAtIJKPoint([i, j, 0]);
+    return { ...data, voxelManager: singleSlice as typeof voxelManager };
+  }
+}
+
 export interface PrimaryTool {
   name: string;
   label: string;
@@ -35,7 +51,7 @@ let toolsRegistered = false;
 
 function registerTools() {
   if (toolsRegistered) return;
-  for (const Tool of [WindowLevelTool, PanTool, ZoomTool, StackScrollTool, LengthTool, AngleTool, ProbeTool]) {
+  for (const Tool of [WindowLevelTool, PanTool, ZoomTool, StackScrollTool, LengthTool, AngleTool, StackProbeTool]) {
     addTool(Tool);
   }
   toolsRegistered = true;
