@@ -1,5 +1,6 @@
 import { getRenderingEngine, type Types } from '@cornerstonejs/core';
 import type { MprContext, MprViewer } from '../mpr-viewer';
+import { downloadBlob, fileTimestamp } from '../../shared/download';
 import type { Vec3 } from './geometry';
 import { createPlanOverlay } from './overlay2d';
 import { createPlanPanel } from './panel';
@@ -69,13 +70,7 @@ export function createTrajectoryPlanner({ mpr, ensureMpr }: TrajectoryPlannerOpt
     },
     exportJson() {
       const json = JSON.stringify(store.toJSON(), null, 2);
-      const url = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
-      const stamp = new Date().toISOString().slice(0, 16).replace(/[-:T]/g, '');
-      const link = Object.assign(document.createElement('a'), { href: url, download: `rencana-trajektori-${stamp}.json` });
-      document.body.append(link);
-      link.click();
-      link.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      downloadBlob(new Blob([json], { type: 'application/json' }), `rencana-trajektori-${fileTimestamp()}.json`);
     },
   });
 
