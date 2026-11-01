@@ -187,11 +187,21 @@ Aturan proyek ada di [`CLAUDE.md`](CLAUDE.md). Jangan pernah commit file DICOM a
 
 Workflow [`.github/workflows/deploy-pages.yml`](.github/workflows/deploy-pages.yml) menjalankan
 `npm ci`, `npm test`, dan `npm run build` pada setiap push ke `main`, lalu men-deploy `dist/` ke
-GitHub Pages. Pada pull request, workflow yang sama hanya menjalankan build dan test, tanpa deploy.
+GitHub Pages. Pada pull request, workflow yang sama hanya menjalankan test dan build, tanpa deploy.
 
 Aktivasi satu kali: **Settings → Pages → Build and deployment → Source: GitHub Actions**.
-Build memakai base `/NeuroView/` (nama repo, lihat [`vite.config.ts`](vite.config.ts)); path lain
-lewat variabel `BASE_PATH`, mis. `BASE_PATH=/ npm run build` untuk domain kustom.
+
+**Base path.** Situs proyek GitHub Pages ada di `https://<user>.github.io/<nama-repo>/`, jadi
+`base` build di [`vite.config.ts`](vite.config.ts) adalah nama repo: `/NeuroView/`.
+
+- Di Actions, workflow mengisi `BASE_PATH`:
+  - di `main`: dari pengaturan Pages (`actions/configure-pages`);
+  - di PR: dari nama repo.
+
+  Base mengikuti otomatis bila repo diganti nama atau memakai domain kustom (base `/`).
+- Setelah build, workflow memeriksa `index.html` memakai base tersebut. Bila tidak cocok, deploy
+  dibatalkan karena base yang salah menghasilkan halaman kosong.
+- Build lokal memakai `/NeuroView/`. Contoh build untuk path lain: `BASE_PATH=/ npm run build`.
 
 ## Disclaimer
 

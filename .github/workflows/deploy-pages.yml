@@ -30,11 +30,31 @@ jobs:
 
       - run: npm ci
       - run: npm test
-      - run: npm run build
 
-      - name: Siapkan artefak Pages
+      # Situs proyek GitHub Pages ada di /<nama-repo>/. Di main path dibaca dari pengaturan Pages
+      # ("/<nama-repo>", atau "" bila memakai domain kustom); di PR dari nama repo.
+      - name: Baca konfigurasi Pages
+        id: pages
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         uses: actions/configure-pages@v5
+
+      - name: Tentukan base path
+        env:
+          PAGES_OUTCOME: ${{ steps.pages.outcome }}
+          PAGES_BASE: ${{ steps.pages.outputs.base_path }}
+          REPO_NAME: ${{ github.event.repository.name }}
+        run: |
+          if [ "$PAGES_OUTCOME" = success ]; then base="$PAGES_BASE/"; else base="/$REPO_NAME/"; fi
+          echo "BASE_PATH=$base" >> "$GITHUB_ENV"
+          echo "Base path: $base"
+
+      - run: npm run build # membaca BASE_PATH (lihat vite.config.ts)
+
+      # Base yang salah menghasilkan halaman kosong di Pages; gagalkan sebelum deploy.
+      - name: Periksa base path & service worker
+        run: |
+          grep -q "src=\"${BASE_PATH}assets/" dist/index.html || { echo "::error::index.html tidak memakai base ${BASE_PATH}"; exit 1; }
+          test -f dist/sw.js || { echo "::error::dist/sw.js tidak ada"; exit 1; }
 
       - name: Unggah artefak Pages
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
