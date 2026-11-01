@@ -14,5 +14,7 @@
     "skipLibCheck": true,
     "noEmit": true
   },
-  "include": ["src", "vite.config.ts"]
+  "include": ["src"],
+  // Kode build (Node) dicek lewat tsconfig.node.json.
+  "exclude": ["src/features/pwa/vite-plugin.ts", "src/features/pwa/vite-plugin.test.ts"]
 }
