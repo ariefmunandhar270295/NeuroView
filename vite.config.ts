@@ -15,8 +15,9 @@ function buildBase(): string {
   return `/${fromEnv}/`.replace(/\/{2,}/g, '/');
 }
 
-export default defineConfig(({ command }) => ({
-  base: command === 'build' ? buildBase() : '/',
+export default defineConfig(({ command, isPreview }) => ({
+  // `vite preview` berjalan dengan command 'serve'; base-nya harus sama dengan build.
+  base: command === 'build' || isPreview ? buildBase() : '/',
   // Service worker untuk offline/PWA, dibuat dari isi folder output (lihat src/features/pwa).
   plugins: [pwaServiceWorker()],
   optimizeDeps: {
