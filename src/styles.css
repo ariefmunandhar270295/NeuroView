@@ -128,6 +128,10 @@ body {
   cursor: not-allowed;
 }
 
+.btn[hidden] {
+  display: none;
+}
+
 .btn[aria-pressed='true'] {
   background: var(--accent-soft);
   border-color: var(--accent);
@@ -1010,4 +1014,42 @@ body {
 .slice-slider:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: -2px;
+}
+
+/* --- PWA: pemberitahuan offline/versi baru & petunjuk pasang --- */
+.pwa-toasts {
+  position: fixed;
+  left: 50%;
+  bottom: calc(env(safe-area-inset-bottom) + 36px);
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: min(460px, calc(100vw - 32px));
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.pwa-toast {
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--panel-2);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  pointer-events: auto;
+}
+
+.pwa-toast p {
+  margin: 0;
+}
+
+.pwa-toast-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.pwa-install-hint {
+  max-width: 440px;
 }
