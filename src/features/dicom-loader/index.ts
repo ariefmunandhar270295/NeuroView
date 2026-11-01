@@ -2,7 +2,7 @@ import { parseDicomHeader, type DicomInstance } from './parseHeader';
 import { buildSeries, groupByStudy, type DicomStudy } from './series';
 import { filesFromDataTransfer } from './collectFiles';
 
-export { prefetchSeriesMetadata } from './prefetch';
+export { ensureInstanceMetadata, prefetchSeriesMetadata } from './prefetch';
 export { releaseStudies } from './release';
 export type { DicomInstance } from './parseHeader';
 export type { DicomSeries, DicomStudy, SlicePlane } from './series';

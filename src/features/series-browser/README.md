@@ -9,6 +9,8 @@ Sidebar kiri berisi Study → Series:
 - **Thumbnail** (`thumbnails.ts`): dirender satu per satu saat item masuk layar
   (`IntersectionObserver`) dengan CPU rendering, supaya decode tidak menumpuk dan tidak memakai
   konteks WebGL tambahan (iPad membatasi jumlahnya). W/L mengikuti nilai default di file DICOM.
+  Metadata dibaca lewat `ensureInstanceMetadata` (fitur `dicom-loader`) agar tidak bentrok dengan
+  prefetch MPR yang membaca file yang sama.
 
 ## API
 

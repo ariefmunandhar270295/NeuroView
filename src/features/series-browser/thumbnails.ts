@@ -1,4 +1,5 @@
 import { utilities } from '@cornerstonejs/core';
+import { ensureInstanceMetadata } from '../dicom-loader';
 
 const THUMB_PX = 128;
 
@@ -19,6 +20,8 @@ export function createThumbnailQueue() {
       if (!canvas.isConnected) continue;
       const holder = canvas.parentElement;
       try {
+        // Metadata lewat jalur bersama agar tidak bentrok dengan prefetch MPR untuk file yang sama.
+        await ensureInstanceMetadata(imageId);
         await utilities.loadImageToCanvas({ canvas, imageId, useCPURendering: true });
         // loadImageToCanvas menimpa ukuran CSS canvas; biarkan stylesheet yang mengatur.
         canvas.removeAttribute('style');
