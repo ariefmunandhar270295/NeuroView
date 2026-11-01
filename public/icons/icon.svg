@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <title>NeuroViewer</title>
+  <rect width="512" height="512" rx="112" fill="#0b0f14"/>
+  <g id="art">
+    <!-- tengkorak & otak, irisan aksial -->
+    <ellipse cx="256" cy="262" rx="148" ry="176" fill="#18212c" stroke="#e6edf3" stroke-width="22"/>
+    <ellipse cx="256" cy="262" rx="118" ry="146" fill="#3a4757"/>
+    <path d="M256 120 V404" stroke="#0b0f14" stroke-width="8"/>
+    <path d="M232 214 C208 230 204 268 222 300 C230 290 236 262 246 240 Z M280 214 C304 230 308 268 290 300 C282 290 276 262 266 240 Z" fill="#0b0f14"/>
+    <!-- trajektori: entry di luar tengkorak menuju target -->
+    <path d="M392 92 L300 270" stroke="#3fa7ff" stroke-width="16" stroke-linecap="round"/>
+    <circle cx="392" cy="92" r="20" fill="#3fa7ff"/>
+    <circle cx="300" cy="270" r="22" fill="#f0e6a0" stroke="#0b0f14" stroke-width="6"/>
+  </g>
+</svg>
