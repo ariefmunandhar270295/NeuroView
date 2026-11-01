@@ -3,7 +3,8 @@
 Toggle layout di awal toolbar: **1×1** (stack viewer, bidang akuisisi asli) dan **2×2 MPR**
 (aksial/koronal/sagital + panel 3D). Pintasan: `M`.
 
-- Toolbar di header mengikuti viewer yang aktif.
+- Toolbar di header mengikuti viewer yang aktif. Di layar sempit (iPad potret) tombol turun ke
+  baris berikutnya, jadi tidak ada tombol yang terpotong di luar layar.
 - Series terakhir tiap viewer diingat agar tidak dimuat ulang; `reset()` melupakannya saat batch
   file baru dibuka (UID series bisa sama bila folder yang sama dibuka lagi).
 - Series hanya dimuat ke viewer yang terlihat; viewer lain menyusul saat layout diganti

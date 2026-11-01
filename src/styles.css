@@ -75,8 +75,6 @@ body {
   order: 3;
   flex-basis: 100%;
   min-width: 0;
-  overflow-x: auto;
-  scrollbar-width: none;
 }
 
 .toolbar,
@@ -86,6 +84,13 @@ body {
   display: flex;
   align-items: center;
   gap: 6px;
+}
+
+/* Layar sempit (iPad potret): tombol pindah ke baris berikutnya, bukan tersembunyi di luar layar. */
+.toolbar,
+.toolbar-group,
+.preset-bar {
+  flex-wrap: wrap;
 }
 
 .toolbar-sep {
@@ -602,6 +607,8 @@ body {
 
 .layout-toolbar-slot {
   display: flex;
+  flex: 1 1 0;
+  min-width: 0;
 }
 
 /* --- MPR --- */
