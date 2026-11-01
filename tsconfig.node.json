@@ -1,0 +1,18 @@
+{
+  // Kode yang berjalan di Node saat build/test: konfigurasi Vite dan plugin service worker.
+  "compilerOptions": {
+    "target": "ES2023",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2023"],
+    "types": ["node"],
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "skipLibCheck": true,
+    "noEmit": true
+  },
+  "include": ["vite.config.ts", "src/features/pwa/vite-plugin.ts", "src/features/pwa/vite-plugin.test.ts"]
+}

@@ -1,0 +1,1055 @@
+:root {
+  --bg: #0b0f14;
+  --panel: #121922;
+  --panel-2: #18212c;
+  --border: #243040;
+  --text: #e6edf3;
+  --muted: #8b98a8;
+  --accent: #3fa7ff;
+  --accent-soft: rgba(63, 167, 255, 0.16);
+  --overlay-text: #f0e6a0;
+  --tap: 44px; /* target sentuh minimum (Apple HIG) */
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font: 14px/1.4 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  overscroll-behavior: none;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom)
+    env(safe-area-inset-left);
+}
+
+#app.is-dragover::after {
+  content: 'Lepas untuk memuat';
+  position: fixed;
+  inset: 12px;
+  display: grid;
+  place-items: center;
+  border: 2px dashed var(--accent);
+  border-radius: 12px;
+  background: rgba(11, 15, 20, 0.8);
+  font-size: 18px;
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* --- Header --- */
+.app-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+}
+
+.brand {
+  flex: 1;
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Toolbar di baris sendiri agar tool + preset muat di iPad tanpa terpotong. */
+.header-tools {
+  order: 3;
+  flex-basis: 100%;
+  min-width: 0;
+}
+
+.toolbar,
+.toolbar-group,
+.preset-bar,
+.dicom-input {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Layar sempit (iPad potret): tombol pindah ke baris berikutnya, bukan tersembunyi di luar layar. */
+.toolbar,
+.toolbar-group,
+.preset-bar {
+  flex-wrap: wrap;
+}
+
+.toolbar-sep {
+  width: 1px;
+  align-self: stretch;
+  margin: 4px 4px;
+  background: var(--border);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--tap);
+  min-height: var(--tap);
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel-2);
+  color: var(--text);
+  font: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+
+.btn:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn[hidden] {
+  display: none;
+}
+
+.btn[aria-pressed='true'] {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.btn:focus-visible,
+.series-item:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* --- Menu ekspor --- */
+.header-input {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.export-menu {
+  position: relative;
+}
+
+.export-menu > summary {
+  list-style: none;
+}
+
+.export-menu > summary::-webkit-details-marker {
+  display: none;
+}
+
+.export-menu[open] > summary {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.menu-panel {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  min-width: 240px;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.menu-item {
+  min-height: var(--tap);
+  padding: 0 12px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.menu-item:hover,
+.menu-item:focus-visible {
+  background: var(--accent-soft);
+  outline: none;
+}
+
+.disclaimer {
+  color: #f5d48a;
+}
+
+/* --- Dialog anonimisasi --- */
+.anon-dialog {
+  width: min(640px, calc(100vw - 32px));
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--panel);
+  color: var(--text);
+}
+
+.anon-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.anon-dialog h2 {
+  margin: 0 0 12px;
+  font-size: 17px;
+}
+
+.anon-dialog h3 {
+  margin: 0 0 4px;
+  font-size: 13px;
+}
+
+.anon-dialog ul {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.anon-scope {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0 0 12px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.anon-scope label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+}
+
+.anon-columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.anon-warning {
+  margin: 12px 0 0;
+  color: #f5d48a;
+  font-size: 13px;
+}
+
+.anon-progress {
+  min-height: 20px;
+  margin: 8px 0 0;
+  color: var(--accent);
+  font-size: 13px;
+}
+
+.anon-progress.is-error {
+  color: #ff8a8a;
+}
+
+.anon-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.btn-primary {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+/* --- Body --- */
+.app-body {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+}
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  width: 260px;
+  flex-shrink: 0;
+  overflow-y: auto;
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+  -webkit-overflow-scrolling: touch;
+}
+
+.sidebar-tabs {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  background: var(--panel);
+}
+
+.sidebar-tab {
+  flex: 1;
+  min-height: var(--tap);
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.sidebar-tab[aria-selected='true'] {
+  border-bottom-color: var(--accent);
+  color: var(--text);
+}
+
+.sidebar-pane[hidden] {
+  display: none;
+}
+
+.sidebar-empty {
+  padding: 16px;
+  color: var(--muted);
+}
+
+.series-browser {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px 8px 12px;
+}
+
+.study-header {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: var(--tap);
+  padding: 6px 4px 6px 22px;
+  list-style: none;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.study-header::-webkit-details-marker {
+  display: none;
+}
+
+.study-header::before {
+  content: '▸';
+  position: absolute;
+  left: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted);
+  transition: transform 0.15s;
+}
+
+.study[open] > .study-header::before {
+  transform: translateY(-50%) rotate(90deg);
+}
+
+.study-title,
+.series-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.study-title {
+  font-weight: 600;
+}
+
+.study-meta,
+.series-meta {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.series-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.series-item {
+  position: relative;
+  display: grid;
+  grid-template-columns: 64px 1fr;
+  align-items: center;
+  column-gap: 10px;
+  width: 100%;
+  padding: 6px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: var(--panel-2);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.series-item[aria-current='true'] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.series-thumb {
+  display: block;
+  width: 64px;
+  height: 64px;
+  overflow: hidden;
+  border-radius: 6px;
+  background: #000;
+}
+
+.series-thumb canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.series-thumb.is-ready canvas {
+  opacity: 1;
+}
+
+.series-modality {
+  position: absolute;
+  left: 9px;
+  bottom: 9px;
+  padding: 0 4px;
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.7);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.series-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.app-main {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.empty-state {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  text-align: center;
+  z-index: 1;
+  background: var(--bg);
+}
+
+.empty-state[hidden] {
+  display: none;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+/* --- Viewer --- */
+.stack-viewer {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.viewport-wrap {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  background: #000;
+}
+
+.viewport {
+  position: absolute;
+  inset: 0;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.stack-viewer.is-loading .viewport-wrap::after {
+  content: 'Memuat…';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 6px 12px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+}
+
+.viewport-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  color: var(--overlay-text);
+  font-size: 13px;
+  text-shadow: 0 0 3px #000, 0 0 3px #000;
+}
+
+.viewport-overlay > div {
+  position: absolute;
+  white-space: pre-line;
+  max-width: 60%;
+}
+
+.overlay-tl {
+  top: 8px;
+  left: 10px;
+}
+
+.overlay-bl {
+  bottom: 8px;
+  left: 10px;
+}
+
+.overlay-br {
+  bottom: 8px;
+  right: 10px;
+  text-align: right;
+}
+
+.slice-slider {
+  width: 100%;
+  height: var(--tap);
+  margin: 0;
+  padding: 0 12px;
+  background: var(--panel);
+  accent-color: var(--accent);
+  touch-action: pan-x;
+}
+
+.status {
+  min-height: 24px;
+  padding: 3px 12px;
+  border-top: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--muted);
+  font-size: 12px;
+}
+
+/* --- Layout 1×1 / 2×2 --- */
+.viewer-layout {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+}
+
+.viewer-layout[data-layout='1x1'] .mpr-viewer,
+.viewer-layout[data-layout='2x2'] .stack-viewer {
+  display: none;
+}
+
+.layout-toggle {
+  display: flex;
+}
+
+.layout-toggle .btn:first-child {
+  border-radius: 8px 0 0 8px;
+}
+
+.layout-toggle .btn:last-child {
+  margin-left: -1px;
+  border-radius: 0 8px 8px 0;
+}
+
+.layout-toolbar-slot {
+  display: flex;
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+/* --- MPR --- */
+.mpr-viewer {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 2px;
+  min-width: 0;
+  min-height: 0;
+  background: var(--border);
+}
+
+.mpr-cell {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: #000;
+  box-shadow: inset 0 2px 0 var(--plane-color, transparent);
+}
+
+.mpr-cell .viewport-overlay {
+  font-size: 12px;
+}
+
+.mpr-cell .overlay-tl {
+  color: var(--plane-color);
+  font-weight: 600;
+}
+
+/* Lingkaran di layer SVG Cornerstone (di dalam .viewport) = handle rotasi crosshair (handle slab
+   dimatikan); hanya tampil di mode oblik. Overlay fitur lain berada di luar .viewport. */
+.mpr-viewer:not(.is-oblique) .mpr-cell .viewport svg circle {
+  display: none;
+}
+
+.mpr-cell-3d {
+  box-shadow: inset 0 2px 0 var(--muted);
+}
+
+/* Tab tampilan panel ke-4 (3D, probe's eye, ...) */
+.panel-tabs {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  z-index: 2;
+  display: flex;
+}
+
+.panel-tabs[hidden] {
+  display: none;
+}
+
+.panel-tabs .btn {
+  min-height: 36px;
+  font-size: 13px;
+  border-radius: 0;
+}
+
+.panel-tabs .btn:first-child {
+  border-radius: 8px 0 0 8px;
+}
+
+.panel-tabs .btn:last-child {
+  margin-left: -1px;
+  border-radius: 0 8px 8px 0;
+}
+
+.panel-tabs .btn[aria-selected='true'] {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.mpr-cell-3d > [hidden] {
+  display: none;
+}
+
+/* --- Volume rendering 3D --- */
+.vr-panel {
+  position: absolute;
+  inset: 0;
+}
+
+.vr-label,
+.vr-status {
+  position: absolute;
+  left: 10px;
+  color: var(--overlay-text);
+  font-size: 12px;
+  font-weight: 600;
+  text-shadow: 0 0 3px #000, 0 0 3px #000;
+  pointer-events: none;
+}
+
+.vr-label {
+  top: 8px;
+}
+
+.vr-status {
+  bottom: 8px;
+  color: var(--accent);
+}
+
+.vr-controls {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: flex;
+  gap: 6px;
+}
+
+.vr-select {
+  min-height: var(--tap);
+  padding: 0 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel-2);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+}
+
+.vr-reset {
+  font-size: 13px;
+}
+
+/* --- Perencanaan trajektori --- */
+.plan-overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.plan-label {
+  font: 600 11px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  paint-order: stroke;
+  stroke: #000;
+  stroke-width: 3px;
+}
+
+.mpr-viewer.is-placing .mpr-cell .viewport {
+  cursor: crosshair;
+}
+
+.plan-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px;
+  font-size: 13px;
+}
+
+.plan-panel p {
+  margin: 0;
+}
+
+.plan-disclaimer {
+  padding: 8px;
+  border: 1px solid #8a6d1a;
+  border-radius: 6px;
+  background: rgba(245, 190, 40, 0.1);
+  color: #f5d48a;
+}
+
+.plan-hint,
+.plan-note {
+  color: var(--muted);
+}
+
+.plan-hint {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.plan-pending {
+  padding: 8px;
+  border-radius: 6px;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.plan-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.plan-section h3 {
+  margin: 0;
+  font-size: 13px;
+}
+
+.plan-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.plan-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.plan-row-label {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.plan-landmark {
+  font-weight: 600;
+}
+
+.plan-coord {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.btn-sm {
+  min-width: 36px;
+  min-height: 36px;
+  padding: 0 8px;
+  font-size: 12px;
+}
+
+.btn-danger {
+  color: #ff8a8a;
+}
+
+.plan-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.plan-trajectory {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--trajectory-color);
+  border-radius: 6px;
+  background: var(--panel-2);
+}
+
+.plan-trajectory.is-active {
+  border-color: var(--trajectory-color);
+}
+
+.plan-trajectory-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.plan-swatch {
+  flex-shrink: 0;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--trajectory-color);
+}
+
+.plan-name {
+  flex: 1;
+  min-width: 0;
+  min-height: 36px;
+  padding: 0 6px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-weight: 600;
+}
+
+.plan-name:focus {
+  border-color: var(--accent);
+  outline: none;
+}
+
+.plan-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.plan-metrics {
+  margin: 0;
+  font-size: 12px;
+}
+
+.plan-metrics dt {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.plan-metrics dd {
+  margin: 0 0 6px;
+  font-variant-numeric: tabular-nums;
+}
+
+.plan-export {
+  align-self: stretch;
+}
+
+/* Probe's eye view (panel ke-4) */
+.probe-view {
+  position: absolute;
+  inset: 0;
+  background: #000;
+}
+
+.probe-title,
+.probe-info {
+  position: absolute;
+  left: 10px;
+  color: var(--overlay-text);
+  font-size: 12px;
+  font-weight: 600;
+  text-shadow: 0 0 3px #000, 0 0 3px #000;
+  pointer-events: none;
+}
+
+.probe-title {
+  top: 8px;
+}
+
+.probe-info {
+  bottom: 50px;
+}
+
+.probe-depth {
+  position: absolute;
+  top: 28px;
+  left: 10px;
+  right: 10px;
+  width: auto;
+  height: 28px;
+  margin: 0;
+  accent-color: var(--accent);
+  touch-action: pan-x;
+}
+
+.probe-depth[hidden],
+.probe-empty[hidden] {
+  display: none;
+}
+
+.probe-empty {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  color: var(--muted);
+  text-align: center;
+}
+
+/* --- Layout sempit (iPhone / iPad split view) --- */
+@media (max-width: 700px) {
+  .app-body {
+    flex-direction: column-reverse;
+  }
+
+  .sidebar {
+    width: auto;
+    max-height: 180px;
+    border-right: 0;
+    border-top: 1px solid var(--border);
+  }
+
+  #app:not(.has-data) .sidebar {
+    display: none;
+  }
+}
+
+.slice-slider:focus {
+  outline: none;
+}
+
+.slice-slider:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+/* --- PWA: pemberitahuan offline/versi baru & petunjuk pasang --- */
+.pwa-toasts {
+  position: fixed;
+  left: 50%;
+  bottom: calc(env(safe-area-inset-bottom) + 36px);
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: min(460px, calc(100vw - 32px));
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.pwa-toast {
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--panel-2);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  pointer-events: auto;
+}
+
+.pwa-toast p {
+  margin: 0;
+}
+
+.pwa-toast-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.pwa-install-hint {
+  max-width: 440px;
+}
