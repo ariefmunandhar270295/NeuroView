@@ -1,9 +1,12 @@
 import { defineConfig } from 'vite';
+import { pwaServiceWorker } from './src/features/pwa/vite-plugin';
 
 export default defineConfig(({ command }) => ({
   // Build memakai path relatif agar bisa disajikan dari subpath, mis. GitHub Pages
   // (https://<user>.github.io/NeuroView/), tanpa mengikat nama repo.
   base: command === 'build' ? './' : '/',
+  // Service worker untuk offline/PWA, dibuat dari isi folder output (lihat src/features/pwa).
+  plugins: [pwaServiceWorker()],
   optimizeDeps: {
     // Loader memuat worker dan codec WASM lewat `new URL(..., import.meta.url)`;
     // pre-bundling memutus path tersebut.

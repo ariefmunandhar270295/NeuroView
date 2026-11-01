@@ -1,6 +1,7 @@
 import { parseDicomHeader, type DicomInstance } from './parseHeader';
 import { buildSeries, groupByStudy, type DicomStudy } from './series';
 import { filesFromDataTransfer } from './collectFiles';
+import { isIOS } from '../../shared/platform';
 
 export { ensureInstanceMetadata, prefetchSeriesMetadata } from './prefetch';
 export { releaseStudies } from './release';
@@ -41,11 +42,6 @@ export interface DicomInputOptions {
   dropTarget: HTMLElement;
   onFiles: (files: File[]) => void;
 }
-
-/** iPadOS melaporkan diri sebagai Mac; deteksi lewat dukungan touch. */
-const isIOS =
-  /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
 function createPicker(label: string, directory: boolean, onFiles: (files: File[]) => void): HTMLLabelElement {
   const button = document.createElement('label');

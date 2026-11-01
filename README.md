@@ -1,7 +1,8 @@
 # NeuroViewer
 
 Viewer DICOM berbasis web untuk **edukasi** dan latihan perencanaan bedah saraf, terinspirasi
-Horos/Brainlab. Berjalan sepenuhnya di browser (desktop Chrome dan iPad Safari).
+Horos/Brainlab. Berjalan sepenuhnya di browser (desktop Chrome dan iPad Safari), bisa dipasang
+sebagai aplikasi, dan bisa dipakai tanpa internet setelah dibuka sekali.
 
 > [!WARNING]
 > **Bukan untuk diagnosis klinis.** NeuroViewer adalah alat edukasi. Fitur ini tidak tervalidasi
@@ -21,6 +22,9 @@ Semua file DICOM dibaca dan diproses **di browser Anda**. Tidak ada yang diungga
 aplikasi tidak melakukan request jaringan ke pihak lain. Nama dan ID pasien tidak ditampilkan di
 layar maupun di ekspor PNG/JSON.
 
+Untuk mode offline, service worker hanya menyimpan file aplikasi (HTML, JS, codec) di perangkat.
+Data DICOM tidak pernah disimpan di cache tersebut.
+
 ## Fitur
 
 | Fitur | Ringkas |
@@ -33,6 +37,7 @@ layar maupun di ekspor PNG/JSON.
 | Perencanaan trajektori | Entry/target, AC-PC, panjang & sudut, probe's eye view, banyak trajektori |
 | Ekspor | Screenshot PNG, anotasi & trajektori JSON |
 | Anonimisasi | Hapus identitas pasien & institusi lalu unduh ulang DICOM (ZIP) |
+| Offline & pasang (PWA) | Pasang di iPad (Layar Utama) atau desktop; berjalan tanpa internet |
 
 Format yang sudah diuji: CT/MR/NM/SC dengan transfer syntax uncompressed (little/big endian,
 implicit VR), JPEG baseline dan lossy 12-bit, JPEG-LS, JPEG 2000, dan RLE, termasuk multi-frame.
@@ -128,6 +133,19 @@ Menganonimkan series yang sedang tampil atau seluruh study, lalu mengunduhnya se
 > Ini **anonimisasi dasar, bukan de-identifikasi lengkap** menurut DICOM PS3.15. Periksa hasilnya
 > sebelum dibagikan. Detail: [`src/features/dicom-anonymizer/README.md`](src/features/dicom-anonymizer/README.md).
 
+### 7. Pasang & pakai offline
+
+- **iPad:** buka demo di Safari, ketuk **Bagikan** lalu **Tambahkan ke Layar Utama**. Buka
+  NeuroViewer dari Layar Utama sekali saat online sampai muncul *siap dipakai offline*. Aplikasi
+  di Layar Utama menyimpan file terpisah dari tab Safari.
+- **Chrome/Edge desktop:** tombol **Pasang** di kanan atas, atau ikon pasang di address bar.
+- Setelah itu semua fitur berjalan tanpa internet, termasuk semua codec, MPR, dan 3D.
+- **Versi baru** diunduh otomatis di latar belakang. Pemberitahuan *Versi baru tersedia*
+  menawarkan **Muat ulang**. Memuat ulang menutup data yang sedang dibuka; pilih **Nanti** untuk
+  memakai versi baru saat aplikasi dibuka berikutnya.
+
+Detail: [`src/features/pwa/README.md`](src/features/pwa/README.md).
+
 ## Pengembangan
 
 Prasyarat: Node.js 22.
@@ -139,6 +157,9 @@ npm test          # unit test (vitest): geometri trajektori & anonimisasi
 npm run build     # typecheck + build produksi ke dist/
 npm run preview   # sajikan dist/ secara lokal
 ```
+
+Service worker (offline) hanya aktif di build produksi. Untuk mencobanya: `npm run build` lalu
+`npm run preview`, kemudian DevTools → Application → Service workers.
 
 Stack: Vite + TypeScript, Cornerstone3D 5.14 (core, tools, dicom-image-loader), vtk.js (volume
 rendering), dcmjs (baca/anonimisasi tag), fflate (ZIP).
@@ -157,6 +178,7 @@ Setiap fitur berada di `src/features/<nama>` dan punya README singkat:
 | `trajectory-planning` | Perencanaan trajektori & probe's eye |
 | `export` | Screenshot PNG & ekspor JSON |
 | `dicom-anonymizer` | Anonimisasi & unduh ulang DICOM |
+| `pwa` | Service worker offline, manifest, pemasangan & pembaruan |
 
 Aturan proyek ada di [`CLAUDE.md`](CLAUDE.md). Jangan pernah commit file DICOM asli; folder
 `/sample` disediakan untuk dataset publik/anonim dan diabaikan git.

@@ -8,3 +8,5 @@ Modul UI kecil yang dipakai lebih dari satu fitur (bukan fitur tersendiri).
   (`fileTimestamp`). Dipakai ekspor PNG/JSON dan rencana trajektori.
 - `disclaimer.ts` — teks "Bukan untuk diagnosis klinis" yang tampil di aplikasi dan ikut di
   setiap ekspor.
+- `platform.ts` — deteksi iPad/iPhone (`isIOS`, termasuk iPadOS yang melapor sebagai Mac) dan
+  mode aplikasi terpasang (`isStandalone`). Dipakai `dicom-loader` dan `pwa`.

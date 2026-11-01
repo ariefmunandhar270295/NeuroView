@@ -4,6 +4,7 @@ import { createAnonymizer } from './features/dicom-anonymizer';
 import { createDicomInput, loadDicomFiles, releaseStudies, type DicomSeries, type DicomStudy } from './features/dicom-loader';
 import { createExportMenu, createImageIndex, type ImageReference } from './features/export';
 import { createMprViewer } from './features/mpr-viewer';
+import { setupPwa } from './features/pwa';
 import { createSeriesBrowser } from './features/series-browser';
 import { createStackViewer } from './features/stack-viewer';
 import { createTrajectoryPlanner } from './features/trajectory-planning';
@@ -144,7 +145,11 @@ const anonymizer = createAnonymizer({
 });
 exportMenu.addItem('Anonimkan & unduh DICOM…', 'Hapus identitas pasien & institusi lalu unduh ZIP', () => anonymizer.open());
 
+const pwa = setupPwa({ hasOpenData: () => loadedStudies.length > 0 });
+if (pwa.installHint) emptyState.append(pwa.installHint);
+
 headerInput.append(
+  pwa.installButton,
   exportMenu.element,
   createDicomInput({
     dropTarget: app,
