@@ -32,6 +32,7 @@ const mpr = createMprViewer();
 container.append(mpr.element); // harus terlihat sebelum showSeries
 await mpr.showSeries(series);
 mpr.setActive(true); // aktifkan pintasan keyboard
+mpr.releaseVolume(); // batalkan pemuatan & buang volume (saat batch file baru dibuka)
 ```
 
 ### Titik ekstensi (dipakai `trajectory-planning`)

@@ -80,6 +80,8 @@ export interface MprViewer {
   addPrimaryTool(tool: MprExtraTool): void;
   selectTool(toolName: string): void;
   addPanelView(view: MprPanelView): void;
+  /** Lepas volume yang sedang dipakai (mis. sebelum batch file baru dibuka). */
+  releaseVolume(): void;
   destroy(): void;
 }
 
@@ -404,6 +406,17 @@ export function createMprViewer(): MprViewer {
     active = value;
   }
 
+  function releaseVolume() {
+    loadToken += 1; // batalkan pemuatan yang sedang berjalan
+    if (!currentVolumeId) return;
+    cache.getVolume(currentVolumeId)?.cancelLoading?.();
+    // Semua viewport di engine ini (bidang MPR, 3D, dan tampilan tambahan) merujuk volume tsb.
+    for (const vp of renderingEngine?.getViewports() ?? []) vp.removeAllActors();
+    cache.removeVolumeLoadObject(currentVolumeId);
+    currentVolumeId = undefined;
+    volumeRender.setStatus('');
+  }
+
   function destroy() {
     window.removeEventListener('keydown', onKeyDown);
     eventTarget.removeEventListener(Enums.Events.IMAGE_VOLUME_MODIFIED, onVolumeModified);
@@ -425,6 +438,7 @@ export function createMprViewer(): MprViewer {
     addPrimaryTool,
     selectTool,
     addPanelView,
+    releaseVolume,
     destroy,
   };
 }

@@ -12,6 +12,8 @@ export interface ViewerLayout {
   showSeries(series: DicomSeries): Promise<void>;
   setMode(mode: LayoutMode): Promise<void>;
   getMode(): LayoutMode;
+  /** Lupakan series yang sudah dimuat ke tiap viewer (dipanggil saat batch file baru dibuka). */
+  reset(): void;
 }
 
 export interface ViewerLayoutOptions {
@@ -110,5 +112,5 @@ export function createViewerLayout({ stack, mpr, onMessage }: ViewerLayoutOption
 
   void setMode('1x1');
 
-  return { element, toolbar, showSeries, setMode, getMode: () => mode };
+  return { element, toolbar, showSeries, setMode, getMode: () => mode, reset: () => loaded.clear() };
 }

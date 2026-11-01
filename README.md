@@ -49,6 +49,10 @@ Codec lain yang didukung Cornerstone (mis. HTJ2K) belum diuji.
 Series dikelompokkan per study di sidebar kiri (tab **Series**). Ketuk satu series untuk
 menampilkannya. Secara default dibuka series aksial dengan irisan terbanyak.
 
+Membuka file/folder baru menggantikan data sebelumnya: gambar, volume, dan pengukurannya dilepas
+dari memori. Rencana trajektori tetap tersimpan selama tab terbuka dan muncul lagi bila data
+dengan frame of reference yang sama dibuka.
+
 ### 2. Navigasi gambar
 
 | Aksi | Mouse / keyboard | iPad |

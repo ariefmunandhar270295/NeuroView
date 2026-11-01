@@ -1,7 +1,7 @@
 import './styles.css';
 import { initCornerstone } from './core/cornerstone';
 import { createAnonymizer } from './features/dicom-anonymizer';
-import { createDicomInput, loadDicomFiles, type DicomSeries, type DicomStudy } from './features/dicom-loader';
+import { createDicomInput, loadDicomFiles, releaseStudies, type DicomSeries, type DicomStudy } from './features/dicom-loader';
 import { createExportMenu, createImageIndex, type ImageReference } from './features/export';
 import { createMprViewer } from './features/mpr-viewer';
 import { createSeriesBrowser } from './features/series-browser';
@@ -101,6 +101,14 @@ async function handleFiles(files: File[]) {
     `${studies.length} study · ${series.length} series dimuat` +
     (skipped ? ` · ${skipped} file non-citra dilewati` : '');
 
+  // Lepas batch sebelumnya (gambar, metadata, volume MPR, anotasi) sebelum menampilkan yang baru.
+  // Sengaja setelah batch baru terbukti berisi citra, agar data lama tetap ada bila gagal.
+  if (loadedStudies.length) {
+    layout.reset();
+    mpr.releaseVolume();
+    releaseStudies(loadedStudies);
+    currentSeries = undefined;
+  }
   seriesPane.replaceChildren(browser.element);
   describeImage = createImageIndex(studies);
   browser.setStudies(studies);

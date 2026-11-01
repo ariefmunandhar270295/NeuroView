@@ -22,6 +22,10 @@ Memuat file DICOM lokal ke Cornerstone tanpa upload ke server.
 - **Prefetch metadata** (`prefetch.ts`): untuk file lokal, metadata Cornerstone baru ada setelah
   file dibaca loader. `prefetchSeriesMetadata` membaca semua irisan lebih dulu (jalur yang sama
   dengan loader, 4 paralel) sehingga volume MPR bisa dibuat.
+- **Melepas batch** (`release.ts`): saat file baru dibuka, `releaseStudies` membuang data batch
+  sebelumnya: gambar ter-decode di cache Cornerstone, cache metadata (termasuk buffer file utuh),
+  referensi `File` di `wadouri.fileManager`, dan pengukuran yang merujuk gambar tersebut. Indeks
+  file manager tidak dipakai ulang, jadi imageId lama tidak pernah menunjuk ke file baru.
 
 ## API
 
@@ -30,4 +34,5 @@ const { studies, skipped } = await loadDicomFiles(files, (done, total) => {});
 // studies[i].series[j].imageIds siap dipakai viewport
 const input = createDicomInput({ dropTarget, onFiles });
 await prefetchSeriesMetadata(series, (done, total) => {}); // sebelum membuat volume
+releaseStudies(previousStudies); // setelah batch baru berhasil dibaca, sebelum ditampilkan
 ```
