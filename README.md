@@ -155,7 +155,7 @@ npm ci            # instal dependensi sesuai package-lock
 npm run dev       # server pengembangan (http://localhost:5173)
 npm test          # unit test (vitest): geometri trajektori & anonimisasi
 npm run build     # typecheck + build produksi ke dist/
-npm run preview   # sajikan dist/ secara lokal
+npm run preview   # sajikan dist/ di http://localhost:4173/NeuroView/
 ```
 
 Service worker (offline) hanya aktif di build produksi. Untuk mencobanya: `npm run build` lalu
@@ -190,8 +190,8 @@ Workflow [`.github/workflows/deploy-pages.yml`](.github/workflows/deploy-pages.y
 GitHub Pages. Pada pull request, workflow yang sama hanya menjalankan build dan test, tanpa deploy.
 
 Aktivasi satu kali: **Settings → Pages → Build and deployment → Source: GitHub Actions**.
-Build memakai path relatif (`base: './'`), sehingga aplikasi bekerja di subpath
-`/NeuroView/` maupun domain kustom.
+Build memakai base `/NeuroView/` (nama repo, lihat [`vite.config.ts`](vite.config.ts)); path lain
+lewat variabel `BASE_PATH`, mis. `BASE_PATH=/ npm run build` untuk domain kustom.
 
 ## Disclaimer
 

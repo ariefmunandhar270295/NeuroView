@@ -1,10 +1,22 @@
 import { defineConfig } from 'vite';
 import { pwaServiceWorker } from './src/features/pwa/vite-plugin';
 
+/**
+ * GitHub Pages proyek disajikan di https://<user>.github.io/<nama-repo>/, jadi base build = nama repo.
+ * Di GitHub Actions, `BASE_PATH` diisi dari konfigurasi Pages (lihat .github/workflows/deploy-pages.yml),
+ * sehingga tetap benar bila repo diganti nama atau memakai domain kustom (base `/`).
+ */
+const REPO_BASE = '/NeuroView/';
+
+function buildBase(): string {
+  const fromEnv = process.env.BASE_PATH?.trim();
+  if (!fromEnv) return REPO_BASE;
+  // Pastikan diawali dan diakhiri satu `/`, mis. "/NeuroView" → "/NeuroView/".
+  return `/${fromEnv}/`.replace(/\/{2,}/g, '/');
+}
+
 export default defineConfig(({ command }) => ({
-  // Build memakai path relatif agar bisa disajikan dari subpath, mis. GitHub Pages
-  // (https://<user>.github.io/NeuroView/), tanpa mengikat nama repo.
-  base: command === 'build' ? './' : '/',
+  base: command === 'build' ? buildBase() : '/',
   // Service worker untuk offline/PWA, dibuat dari isi folder output (lihat src/features/pwa).
   plugins: [pwaServiceWorker()],
   optimizeDeps: {
